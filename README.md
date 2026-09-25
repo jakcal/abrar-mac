@@ -2,11 +2,11 @@
 
 Abrar is a free, open-source macOS app for prayer times and the Qur'an. It lives in the menu bar, where it shows the next prayer and a countdown. It also has a Qur'an reader with streaming and offline recitation.
 
-> Screenshots: coming soon (`docs/screenshots/`).
+![Abrar: the menu bar popover with the next prayer countdown, over the Qur'an reader highlighting the ayah being recited](docs/screenshots/abrar.jpg)
 
 ## Features
 
-- **Menu bar**: shows the next prayer and a countdown (e.g. `Asr 1:24`). The popover lists today's five prayers and sunrise.
+- **Menu bar**: shows the next prayer and a countdown (e.g. `Asr 1:24`). The popover has a card for the next prayer, today's five prayers and sunrise, and controls for the recitation that's playing.
 - **Prayer times**: calculated with [Adhan](https://github.com/batoulapps/adhan-swift).
   - Every Adhan preset, plus a **Morocco (Habous)** preset calibrated against habous.gov.ma
   - Shafi/Hanafi Asr
@@ -19,7 +19,10 @@ Abrar is a free, open-source macOS app for prayer times and the Qur'an. It lives
   - The ayah being recited is highlighted and followed in the reader, including offline
   - Streaming playback
   - Media keys and Control Center support
-  - Download surahs for offline listening; downloads show their size and can be deleted
+  - Playback speed (0.5× to 2×) and a sleep timer (5 to 60 minutes, or end of surah)
+  - Resumes each surah where you left off, per reciter
+  - Download single surahs or all 114 for offline listening; downloads show their size and can be deleted
+- **Design**: Liquid Glass on macOS 26, with a material fallback on macOS 14 and 15.
 - **Launch at login**.
 
 Requires macOS 14 or later.
