@@ -19,6 +19,7 @@ struct GeneralSettingsView: View {
                         .font(.callout)
                 }
             }
+            UpdateSettingsSection()
             Section("About") {
                 Text("Made by Yassine Chandid · [yassinech.com](https://yassinech.com) · [@jakcal on GitHub](https://github.com/jakcal)")
                 Text("If you find it useful, consider [supporting development on Ko-fi](https://ko-fi.com/jakcal).")

@@ -12,6 +12,7 @@ struct AppServices: Sendable {
     var audioStorage: AudioStorage
     var timings: AyahTimingProviding
     var listeningPositions: ListeningPositionStore
+    var releases: ReleaseChecking
 
     static func live() -> AppServices {
         let quran: QuranStore
@@ -31,7 +32,8 @@ struct AppServices: Sendable {
             launchAtLogin: SMAppLaunchAtLogin(),
             audioStorage: AudioStorage(root: AppPaths.audio),
             timings: QDCTimingService(cache: GRDBTimingCache(database: userDatabase)),
-            listeningPositions: GRDBListeningPositionStore(database: userDatabase)
+            listeningPositions: GRDBListeningPositionStore(database: userDatabase),
+            releases: GitHubReleaseChecker()
         )
     }
 

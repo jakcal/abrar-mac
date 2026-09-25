@@ -13,6 +13,7 @@ final class AppModel {
     let player: AudioPlayerService
     let downloads: DownloadManager
     let location: LocationController
+    let updates: UpdateController
 
     @ObservationIgnored private let adhan: AdhanPlaying = AdhanAudioPlayer()
     @ObservationIgnored private let notificationPresenter = NotificationPresenter()
@@ -34,6 +35,7 @@ final class AppModel {
         player.setRate(settings.settings.playbackRate)
         downloads = DownloadManager(storage: services.audioStorage, timings: services.timings)
         location = LocationController(provider: CoreLocationService(), store: settings)
+        updates = UpdateController(checker: services.releases)
 
         settings.onChange = { [weak self] old, new in self?.settingsChanged(from: old, to: new) }
         schedule.onPrayerTime = { [weak self] time in self?.prayerStarted(time) }
@@ -72,6 +74,9 @@ final class AppModel {
             _ = await services.notifications.requestAuthorization()
             scheduleNotifications()
         }
+        if settings.settings.checkForUpdates {
+            updates.startAutomaticChecks()
+        }
         if settings.settings.locationMode == .automatic {
             Task { await location.refresh() }
         }
@@ -92,6 +97,9 @@ final class AppModel {
         }
         if old.reciterID != new.reciterID {
             player.setReciter(Reciter.with(id: new.reciterID))
+        }
+        if old.checkForUpdates != new.checkForUpdates {
+            new.checkForUpdates ? updates.startAutomaticChecks() : updates.stopAutomaticChecks()
         }
         if old.locationMode != new.locationMode, new.locationMode == .automatic {
             Task { await location.refresh() }

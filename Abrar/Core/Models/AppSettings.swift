@@ -20,6 +20,7 @@ struct AppSettings: Codable, Equatable, Sendable {
     var quranFontSize: Double = 30
     var followRecitation = true
     var playbackRate: Double = 1
+    var checkForUpdates = true
 
     init() {}
 
@@ -40,7 +41,7 @@ struct AppSettings: Codable, Equatable, Sendable {
     private enum CodingKeys: String, CodingKey {
         case locationMode, manualPlace, detectedPlace, method, madhab
         case fajrAngleOverride, ishaAngleOverride, offsets, notifiedPrayers
-        case playFullAdhan, prayerSounds, reciterID, quranFontSize, followRecitation, playbackRate
+        case playFullAdhan, prayerSounds, reciterID, quranFontSize, followRecitation, playbackRate, checkForUpdates
     }
 
     // Missing keys fall back to defaults so settings saved by older versions keep loading.
@@ -62,5 +63,6 @@ struct AppSettings: Codable, Equatable, Sendable {
         quranFontSize = try c.decodeIfPresent(Double.self, forKey: .quranFontSize) ?? d.quranFontSize
         followRecitation = try c.decodeIfPresent(Bool.self, forKey: .followRecitation) ?? d.followRecitation
         playbackRate = try c.decodeIfPresent(Double.self, forKey: .playbackRate) ?? d.playbackRate
+        checkForUpdates = try c.decodeIfPresent(Bool.self, forKey: .checkForUpdates) ?? d.checkForUpdates
     }
 }

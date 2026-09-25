@@ -5,6 +5,7 @@ struct MenuBarPanel: View {
     @Environment(SettingsStore.self) private var store
     @Environment(AudioPlayerService.self) private var player
     @Environment(ReaderModel.self) private var reader
+    @Environment(UpdateController.self) private var updates
     @Environment(\.openWindow) private var openWindow
     @Environment(\.openSettings) private var openSettings
 
@@ -21,6 +22,9 @@ struct MenuBarPanel: View {
             }
             if let surah = player.surah {
                 NowPlayingStrip(surah: surah) { showReader(at: surah) }
+            }
+            if let release = updates.available {
+                UpdateBanner(release: release, download: updates.download)
             }
             PanelFooter(continueSurah: reader.selectedSurah, openQuran: { showReader() }, openSettings: showSettings)
         }

@@ -39,5 +39,6 @@ private extension View {
             .environment(model.player)
             .environment(model.downloads)
             .environment(model.location)
+            .environment(model.updates)
     }
 }
