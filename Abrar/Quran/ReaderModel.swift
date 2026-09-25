@@ -81,6 +81,15 @@ final class ReaderModel {
         }
     }
 
+    func removeBookmark(_ bookmark: Bookmark) {
+        do {
+            try library.removeBookmark(surah: bookmark.surah, ayah: bookmark.ayah)
+            bookmarks = try library.bookmarks()
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+    }
+
     func surahName(_ id: Int) -> String {
         surahs.first { $0.id == id }?.nameTransliterated ?? "Surah \(id)"
     }

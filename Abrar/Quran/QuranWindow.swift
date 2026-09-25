@@ -5,10 +5,9 @@ struct QuranWindow: View {
     @Environment(AudioPlayerService.self) private var player
 
     var body: some View {
-        @Bindable var reader = reader
         NavigationSplitView {
             SurahSidebar()
-                .navigationSplitViewColumnWidth(min: 240, ideal: 280, max: 360)
+                .navigationSplitViewColumnWidth(min: 250, ideal: 290, max: 380)
         } detail: {
             // A stacked bar (not a safe-area inset) so it never covers the last ayahs.
             VStack(spacing: 0) {
@@ -17,52 +16,34 @@ struct QuranWindow: View {
                     SurahReaderView(surah: surah)
                         .id(surah.id)
                 } else {
-                    ContentUnavailableView("Select a Surah", systemImage: "book", description: Text("Pick a surah from the list to start reading."))
-                        .frame(maxHeight: .infinity)
+                    NoSurahView()
                 }
-                if player.surah != nil {
-                    PlayerBar()
+                if let surah = player.surah {
+                    PlayerBar(surah: surah)
+                        .transition(.move(edge: .bottom).combined(with: .opacity))
                 }
             }
+            .motion(Motion.standard, value: player.surah == nil)
         }
         .toolbar { ReaderToolbar() }
-        .frame(minWidth: 760, minHeight: 480)
+        .background { ReaderShortcuts() }
+        .frame(minWidth: 780, minHeight: 500)
     }
 }
 
-private struct ReaderToolbar: ToolbarContent {
-    @Environment(SettingsStore.self) private var store
-    @State private var showsBookmarks = false
+private struct NoSurahView: View {
+    @Environment(ReaderModel.self) private var reader
 
-    var body: some ToolbarContent {
-        ToolbarItemGroup(placement: .primaryAction) {
-            Button {
-                store.settings.quranFontSize = max(18, store.settings.quranFontSize - 2)
-            } label: {
-                Label("Smaller Text", systemImage: "textformat.size.smaller")
-            }
-            .keyboardShortcut("-", modifiers: .command)
-
-            Button {
-                store.settings.quranFontSize = min(64, store.settings.quranFontSize + 2)
-            } label: {
-                Label("Larger Text", systemImage: "textformat.size.larger")
-            }
-            .keyboardShortcut("+", modifiers: .command)
-
-            Toggle(isOn: Bindable(store).settings.followRecitation) {
-                Label("Follow Recitation", systemImage: "text.line.first.and.arrowtriangle.forward")
-            }
-            .help("Scroll to the ayah being recited")
-
-            Button {
-                showsBookmarks.toggle()
-            } label: {
-                Label("Bookmarks", systemImage: "bookmark")
-            }
-            .popover(isPresented: $showsBookmarks, arrowEdge: .bottom) {
-                BookmarksList { showsBookmarks = false }
-            }
+    var body: some View {
+        ContentUnavailableView {
+            Label("Select a Surah", systemImage: "book.pages")
+        } description: {
+            Text(reader.errorMessage ?? "Pick a surah from the sidebar to start reading.")
+        } actions: {
+            Button("Open Al-Fatiha") { reader.open(surah: 1) }
+                .glassButtonStyle(prominent: true)
+                .disabled(reader.surahs.isEmpty)
         }
+        .frame(maxHeight: .infinity)
     }
 }
