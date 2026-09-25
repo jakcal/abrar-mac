@@ -14,8 +14,9 @@ struct PrayerCalculatorTests {
         let prayerDay = try #require(calculator.prayerDay(on: day, place: casablanca, config: config))
         let formatter = DateFormatter()
         formatter.dateFormat = "HH:mm"
-        // Fixed UTC+1 (Morocco's offset on this date) so the result doesn't depend on the machine's tz database.
-        formatter.timeZone = TimeZone(secondsFromGMT: 3600)
+        // Habous publishes this timetable in UTC+0. A fixed offset keeps the test independent of
+        // the machine's tz database (older ones still put Casablanca at UTC+1).
+        formatter.timeZone = TimeZone(secondsFromGMT: 0)
         return Dictionary(uniqueKeysWithValues: prayerDay.times.map { ($0.prayer, formatter.string(from: $0.date)) })
     }
 
