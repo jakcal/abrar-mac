@@ -1,0 +1,24 @@
+# Xcode
+*.xcodeproj
+*.xcworkspace
+xcuserdata/
+DerivedData/
+build/
+*.xcresult
+*.moved-aside
+*.hmap
+*.ipa
+*.dSYM.zip
+*.dSYM
+
+# SwiftPM
+.build/
+.swiftpm/
+Package.resolved
+
+# Scripts
+scripts/.cache/
+__pycache__/
+
+# macOS
+.DS_Store

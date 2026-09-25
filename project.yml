@@ -1,0 +1,89 @@
+name: Abrar
+
+options:
+  bundleIdPrefix: app.abrar
+  deploymentTarget:
+    macOS: "14.0"
+  createIntermediateGroups: true
+  developmentLanguage: en
+
+settings:
+  base:
+    SWIFT_VERSION: "6.0"
+    SWIFT_STRICT_CONCURRENCY: complete
+    MACOSX_DEPLOYMENT_TARGET: "14.0"
+    CODE_SIGN_IDENTITY: "-"
+    CODE_SIGN_STYLE: Manual
+    DEVELOPMENT_TEAM: ""
+    ENABLE_USER_SCRIPT_SANDBOXING: YES
+    DEAD_CODE_STRIPPING: YES
+    ENABLE_STRICT_OBJC_MSGSEND: YES
+
+packages:
+  Adhan:
+    url: https://github.com/batoulapps/adhan-swift
+    from: 1.5.0
+  GRDB:
+    url: https://github.com/groue/GRDB.swift
+    from: 7.9.0
+
+targets:
+  Abrar:
+    type: application
+    platform: macOS
+    sources:
+      - path: Abrar
+        excludes:
+          - "App/Info.plist"
+          - "App/Abrar.entitlements"
+    dependencies:
+      - package: Adhan
+      - package: GRDB
+    info:
+      path: Abrar/App/Info.plist
+      properties:
+        CFBundleDisplayName: Abrar
+        CFBundleShortVersionString: "0.1.0"
+        CFBundleVersion: "1"
+        LSUIElement: true
+        LSApplicationCategoryType: public.app-category.lifestyle
+        NSHumanReadableCopyright: "MIT License. Quran text © Tanzil Project (CC BY 3.0)."
+        NSLocationUsageDescription: Abrar uses your location to calculate accurate prayer times.
+        NSLocationWhenInUseUsageDescription: Abrar uses your location to calculate accurate prayer times.
+    entitlements:
+      path: Abrar/App/Abrar.entitlements
+      properties:
+        com.apple.security.app-sandbox: true
+        com.apple.security.network.client: true
+        com.apple.security.personal-information.location: true
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: app.abrar.Abrar
+        PRODUCT_NAME: Abrar
+        ENABLE_HARDENED_RUNTIME: YES
+        COMBINE_HIDPI_IMAGES: YES
+
+  AbrarTests:
+    type: bundle.unit-test
+    platform: macOS
+    sources:
+      - path: AbrarTests
+    dependencies:
+      - target: Abrar
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: app.abrar.AbrarTests
+        TEST_HOST: "$(BUILT_PRODUCTS_DIR)/Abrar.app/Contents/MacOS/Abrar"
+        BUNDLE_LOADER: "$(TEST_HOST)"
+        GENERATE_INFOPLIST_FILE: YES
+
+schemes:
+  Abrar:
+    build:
+      targets:
+        Abrar: all
+        AbrarTests: [test]
+    test:
+      targets:
+        - AbrarTests
+      gatherCoverageData: false
