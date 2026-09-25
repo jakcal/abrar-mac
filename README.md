@@ -74,6 +74,10 @@ AbrarTests/       unit tests (Swift Testing)
 scripts/          data build scripts
 ```
 
+## Inspiration
+
+Abrar is inspired by [Guidance](https://guidanceapp.com) by [Batoul Apps](https://batoulapps.com), the elegant menu bar prayer times app many of us used for years. It no longer appears to be actively updated, so Abrar aims to carry that spirit forward on modern macOS. Batoul Apps also maintain [Adhan](https://github.com/batoulapps/adhan-swift), the library Abrar uses to calculate prayer times. JazakumAllahu khayran.
+
 ## Author
 
 Made by **Yassine Chandid**: [yassinech.com](https://yassinech.com) · [@jakcal](https://github.com/jakcal) on GitHub.

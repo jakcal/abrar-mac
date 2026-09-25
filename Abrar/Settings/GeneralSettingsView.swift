@@ -26,6 +26,7 @@ struct GeneralSettingsView: View {
             .font(.callout)
             Section("Credits") {
                 Text("Quran text: [Tanzil Project](https://tanzil.net), Uthmani, CC BY 3.0, used verbatim.")
+                Text("Inspired by [Guidance](https://guidanceapp.com) by Batoul Apps.")
                 Text("Prayer times: [Adhan Swift](https://github.com/batoulapps/adhan-swift) (MIT).")
                 Text("Recitations: [QuranicAudio](https://quranicaudio.com), served by [quran.com](https://quran.com).")
                 Text("Ayah timings: [quran.com](https://quran.com) audio API. Not affiliated with or endorsed by quran.com.")
