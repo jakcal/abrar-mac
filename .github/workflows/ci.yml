@@ -1,0 +1,35 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: macos-26
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Select latest Xcode 26
+        run: sudo xcode-select -s "$(ls -d /Applications/Xcode_26*.app | sort -V | tail -n 1)"
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Build and test
+        run: |
+          set -o pipefail
+          scripts/generate_project.sh
+          xcodebuild -project Abrar.xcodeproj -scheme Abrar -derivedDataPath build/DerivedData \
+            -disableAutomaticPackageResolution CODE_SIGN_IDENTITY=- test \
+            | tee build.log | grep -E "✘|Test run with|error:|TEST (SUCCEEDED|FAILED)"
+          if grep "warning:" build.log | grep -v appintentsmetadataprocessor; then
+            echo "::error::Build has warnings"
+            exit 1
+          fi

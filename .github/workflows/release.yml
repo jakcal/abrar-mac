@@ -1,0 +1,66 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+  id-token: write
+  attestations: write
+
+jobs:
+  release:
+    runs-on: macos-26
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Select latest Xcode 26
+        run: sudo xcode-select -s "$(ls -d /Applications/Xcode_26*.app | sort -V | tail -n 1)"
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Test
+        run: |
+          set -o pipefail
+          scripts/generate_project.sh
+          xcodebuild -project Abrar.xcodeproj -scheme Abrar -derivedDataPath build/DerivedData \
+            -disableAutomaticPackageResolution CODE_SIGN_IDENTITY=- test | grep -E "✘|Test run with|error:|TEST (SUCCEEDED|FAILED)"
+
+      - name: Package
+        run: scripts/package_release.sh "${GITHUB_REF_NAME#v}" "${{ github.run_number }}"
+
+      - name: Attest build provenance
+        uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
+        with:
+          subject-path: build/release/Abrar-*.dmg
+
+      - name: Publish GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          cat > notes.md <<NOTES
+          ## Install
+
+          1. Download **Abrar-${VERSION}.dmg** below, open it and drag **Abrar** into **Applications**.
+          2. Open Abrar. macOS will say it can't verify the developer, because Abrar isn't notarized by Apple.
+          3. Go to **System Settings → Privacy & Security**, scroll down and click **Open Anyway**, then confirm.
+
+          Or run \`xattr -dr com.apple.quarantine /Applications/Abrar.app\` in Terminal before opening it.
+
+          Requires macOS 14 or later, on Apple Silicon or Intel.
+
+          To verify this DMG was built by this repository's release workflow:
+          \`gh attestation verify Abrar-${VERSION}.dmg --repo jakcal/abrar-mac\`
+
+          NOTES
+          gh release create "$GITHUB_REF_NAME" \
+            "build/release/Abrar-${VERSION}.dmg" \
+            "build/release/Abrar-${VERSION}.dmg.sha256" \
+            --title "Abrar ${VERSION}" \
+            --notes-file notes.md \
+            --generate-notes

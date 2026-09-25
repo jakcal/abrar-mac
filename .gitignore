@@ -14,7 +14,6 @@ build/
 # SwiftPM
 .build/
 .swiftpm/
-Package.resolved
 
 # Scripts
 scripts/.cache/
