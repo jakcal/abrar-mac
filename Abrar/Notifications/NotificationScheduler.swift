@@ -3,7 +3,7 @@ import UserNotifications
 
 protocol NotificationScheduling: Sendable {
     func requestAuthorization() async -> Bool
-    func reschedule(days: [PrayerDay], place: Place, enabled: Set<PrayerName>) async
+    func reschedule(days: [PrayerDay], place: Place, enabled: Set<PrayerName>, sounds: PrayerSounds) async
     func scheduleTestNotification(after seconds: TimeInterval) async
 }
 
@@ -15,7 +15,7 @@ struct UserNotificationScheduler: NotificationScheduling {
         (try? await UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound])) ?? false
     }
 
-    func reschedule(days: [PrayerDay], place: Place, enabled: Set<PrayerName>) async {
+    func reschedule(days: [PrayerDay], place: Place, enabled: Set<PrayerName>, sounds: PrayerSounds) async {
         let center = UNUserNotificationCenter.current()
         let stale = await center.pendingNotificationRequests()
             .map(\.identifier)
@@ -31,7 +31,7 @@ struct UserNotificationScheduler: NotificationScheduling {
             )
             let request = UNNotificationRequest(
                 identifier: "\(Self.identifierPrefix)\(Int(time.date.timeIntervalSince1970)).\(time.prayer.rawValue)",
-                content: content(for: time, place: place),
+                content: content(for: time, place: place, sound: sounds[time.prayer]),
                 trigger: UNCalendarNotificationTrigger(dateMatching: components, repeats: false)
             )
             try? await center.add(request)
@@ -51,11 +51,15 @@ struct UserNotificationScheduler: NotificationScheduling {
         try? await UNUserNotificationCenter.current().add(request)
     }
 
-    private func content(for time: PrayerTime, place: Place) -> UNMutableNotificationContent {
+    private func content(for time: PrayerTime, place: Place, sound: AlertSound) -> UNMutableNotificationContent {
         let content = UNMutableNotificationContent()
         content.title = "\(time.prayer.displayName) · \(time.prayer.arabicName)"
         content.body = "It's time for \(time.prayer.displayName) in \(place.name) (\(PrayerFormatting.time(time.date, in: place.timeZone)))."
-        content.sound = UNNotificationSound(named: Self.soundName)
+        switch sound {
+        case .adhan: content.sound = UNNotificationSound(named: Self.soundName)
+        case .tone: content.sound = .default
+        case .silent: content.sound = nil
+        }
         return content
     }
 }

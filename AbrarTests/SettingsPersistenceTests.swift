@@ -19,6 +19,8 @@ struct SettingsPersistenceTests {
         settings.offsets[.isha] = -4
         settings.notifiedPrayers = [.fajr, .maghrib]
         settings.playFullAdhan = true
+        settings.prayerSounds[.fajr] = .silent
+        settings.prayerSounds[.asr] = .tone
         settings.reciterID = "husary"
         settings.quranFontSize = 40
 
@@ -85,5 +87,16 @@ struct ListeningPositionTests {
         #expect(ListeningPosition(reciterID: "a", surah: 1, position: 97, duration: 100).resumeTime == nil)
         #expect(ListeningPosition(reciterID: "a", surah: 1, position: 50, duration: 100).resumeTime == 50)
         #expect(ListeningPosition(reciterID: "a", surah: 1, position: 50, duration: 0).resumeTime == 50)
+    }
+}
+
+struct PrayerSoundsTests {
+    @Test func defaultsToAdhanAndIgnoresSunrise() {
+        var sounds = PrayerSounds()
+        #expect(PrayerName.obligatory.allSatisfy { sounds[$0] == .adhan })
+        sounds[.sunrise] = .tone
+        #expect(sounds[.sunrise] == .silent)
+        sounds[.isha] = .tone
+        #expect(sounds.isha == .tone)
     }
 }

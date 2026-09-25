@@ -15,6 +15,7 @@ struct AppSettings: Codable, Equatable, Sendable {
     var offsets = PrayerOffsets()
     var notifiedPrayers: Set<PrayerName> = Set(PrayerName.obligatory)
     var playFullAdhan = false
+    var prayerSounds = PrayerSounds()
     var reciterID = Reciter.defaultID
     var quranFontSize: Double = 30
     var followRecitation = true
@@ -39,7 +40,7 @@ struct AppSettings: Codable, Equatable, Sendable {
     private enum CodingKeys: String, CodingKey {
         case locationMode, manualPlace, detectedPlace, method, madhab
         case fajrAngleOverride, ishaAngleOverride, offsets, notifiedPrayers
-        case playFullAdhan, reciterID, quranFontSize, followRecitation, playbackRate
+        case playFullAdhan, prayerSounds, reciterID, quranFontSize, followRecitation, playbackRate
     }
 
     // Missing keys fall back to defaults so settings saved by older versions keep loading.
@@ -56,6 +57,7 @@ struct AppSettings: Codable, Equatable, Sendable {
         offsets = try c.decodeIfPresent(PrayerOffsets.self, forKey: .offsets) ?? d.offsets
         notifiedPrayers = try c.decodeIfPresent(Set<PrayerName>.self, forKey: .notifiedPrayers) ?? d.notifiedPrayers
         playFullAdhan = try c.decodeIfPresent(Bool.self, forKey: .playFullAdhan) ?? d.playFullAdhan
+        prayerSounds = try c.decodeIfPresent(PrayerSounds.self, forKey: .prayerSounds) ?? d.prayerSounds
         reciterID = try c.decodeIfPresent(String.self, forKey: .reciterID) ?? d.reciterID
         quranFontSize = try c.decodeIfPresent(Double.self, forKey: .quranFontSize) ?? d.quranFontSize
         followRecitation = try c.decodeIfPresent(Bool.self, forKey: .followRecitation) ?? d.followRecitation

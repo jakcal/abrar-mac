@@ -83,7 +83,8 @@ final class AppModel {
         if placeChanged || configChanged {
             schedule.update(place: new.activePlace, config: new.calculationConfig)
         }
-        if placeChanged || configChanged || old.notifiedPrayers != new.notifiedPrayers {
+        if placeChanged || configChanged || old.notifiedPrayers != new.notifiedPrayers
+            || old.prayerSounds != new.prayerSounds {
             scheduleNotifications()
         }
         if old.playbackRate != new.playbackRate {
@@ -103,7 +104,10 @@ final class AppModel {
     }
 
     private func prayerStarted(_ time: PrayerTime) {
-        guard settings.settings.playFullAdhan else { return }
+        let current = settings.settings
+        guard current.playFullAdhan,
+              current.notifiedPrayers.contains(time.prayer),
+              current.prayerSounds[time.prayer] == .adhan else { return }
         player.pause()
         adhan.play()
     }
@@ -117,7 +121,8 @@ final class AppModel {
             await services.notifications.reschedule(
                 days: schedule.upcomingDays(7),
                 place: place,
-                enabled: settings.settings.notifiedPrayers
+                enabled: settings.settings.notifiedPrayers,
+                sounds: settings.settings.prayerSounds
             )
         }
     }
