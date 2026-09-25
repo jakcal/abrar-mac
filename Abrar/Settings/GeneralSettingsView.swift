@@ -8,17 +8,20 @@ struct GeneralSettingsView: View {
     var body: some View {
         Form {
             Section {
-                Toggle("Launch at login", isOn: $launchAtLogin)
+                AboutHeader()
+            }
+            Section {
+                Toggle("Open Abrar at login", isOn: $launchAtLogin)
                     .onChange(of: launchAtLogin) { _, enabled in setLaunchAtLogin(enabled) }
                 if let errorMessage {
-                    Text(errorMessage).foregroundStyle(.red).font(.callout)
+                    Label(errorMessage, systemImage: "exclamationmark.triangle.fill")
+                        .foregroundStyle(.orange)
+                        .font(.callout)
                 }
             }
             Section("About") {
-                Text("Abrar is made by Yassine Chandid · [yassinech.com](https://yassinech.com) · [@jakcal on GitHub](https://github.com/jakcal)")
+                Text("Made by Yassine Chandid · [yassinech.com](https://yassinech.com) · [@jakcal on GitHub](https://github.com/jakcal)")
                 Text("If you find it useful, consider [supporting development on Ko-fi](https://ko-fi.com/jakcal).")
-                Text("Open source under the MIT License.")
-                    .foregroundStyle(.secondary)
             }
             .font(.callout)
             Section("Credits") {
@@ -44,5 +47,29 @@ struct GeneralSettingsView: View {
             errorMessage = error.localizedDescription
             launchAtLogin = app.services.launchAtLogin.isEnabled
         }
+    }
+}
+
+private struct AboutHeader: View {
+    private var version: String {
+        Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? ""
+    }
+
+    var body: some View {
+        HStack(spacing: 14) {
+            Image(nsImage: NSApp.applicationIconImage)
+                .resizable()
+                .frame(width: 52, height: 52)
+                .accessibilityHidden(true)
+            VStack(alignment: .leading, spacing: 2) {
+                Text("Abrar").font(.title2.weight(.semibold))
+                Text("Prayer times and the Quran in your menu bar")
+                    .foregroundStyle(.secondary)
+                Text("Version \(version) · Open source under the MIT License")
+                    .font(.caption)
+                    .foregroundStyle(.tertiary)
+            }
+        }
+        .padding(.vertical, 4)
     }
 }

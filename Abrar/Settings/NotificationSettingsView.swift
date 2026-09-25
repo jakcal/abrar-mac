@@ -6,17 +6,29 @@ struct NotificationSettingsView: View {
 
     var body: some View {
         Form {
-            Section("Notify me for") {
+            Section {
                 ForEach(PrayerName.obligatory) { prayer in
-                    Toggle(prayer.displayName, isOn: binding(for: prayer))
+                    Toggle(isOn: binding(for: prayer)) {
+                        Label(prayer.displayName, systemImage: prayer.symbolName)
+                    }
                 }
+            } header: {
+                Text("Notify Me For")
+            } footer: {
+                Text("Notifications arrive at the start of each prayer, even when the menu is closed.")
             }
-            Section("Adhan") {
-                Toggle("Play full adhan while Abrar is running", isOn: Bindable(store).settings.playFullAdhan)
-                HStack {
-                    Button("Preview", systemImage: "play.fill", action: app.playAdhan)
-                    Button("Stop", systemImage: "stop.fill", action: app.stopAdhan)
+            Section {
+                Toggle("Play the full adhan", isOn: Bindable(store).settings.playFullAdhan)
+                LabeledContent("Preview") {
+                    HStack {
+                        Button("Play", systemImage: "play.fill", action: app.playAdhan)
+                        Button("Stop", systemImage: "stop.fill", action: app.stopAdhan)
+                    }
                 }
+            } header: {
+                Text("Adhan")
+            } footer: {
+                Text("Plays while Abrar is running and pauses any recitation.")
             }
             #if DEBUG
             Section("Debug") {
