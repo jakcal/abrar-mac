@@ -13,11 +13,13 @@ struct SpeedMenu: View {
             .pickerStyle(.inline)
         } label: {
             Text(Self.label(store.settings.playbackRate))
-                .monospacedDigit()
+                .font(.caption.weight(.semibold).monospacedDigit())
         }
         .menuStyle(.borderlessButton)
+        .menuIndicator(.hidden)
         .fixedSize()
         .help("Playback speed")
+        .accessibilityLabel("Playback speed, \(Self.label(store.settings.playbackRate))")
     }
 
     static func label(_ rate: Double) -> String {
@@ -40,10 +42,13 @@ struct SleepTimerMenu: View {
             }
         } label: {
             label
+                .font(.caption.monospacedDigit())
         }
         .menuStyle(.borderlessButton)
+        .menuIndicator(.hidden)
         .fixedSize()
         .help("Sleep timer")
+        .accessibilityLabel("Sleep timer")
     }
 
     @ViewBuilder
@@ -53,10 +58,12 @@ struct SleepTimerMenu: View {
             Image(systemName: "moon.zzz")
         case .endOfSurah:
             Label("End of surah", systemImage: "moon.zzz.fill")
+                .foregroundStyle(.tint)
         case let .at(deadline):
             TimelineView(.periodic(from: .now, by: 1)) { context in
                 Label(Self.remaining(until: deadline, now: context.date), systemImage: "moon.zzz.fill")
                     .monospacedDigit()
+                    .foregroundStyle(.tint)
             }
         }
     }
