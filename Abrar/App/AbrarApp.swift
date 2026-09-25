@@ -17,7 +17,7 @@ struct AbrarApp: App {
         }
         .menuBarExtraStyle(.window)
 
-        Window("Quran", id: WindowID.quran) {
+        Window("Abrar", id: WindowID.quran) {
             QuranWindow()
                 .appEnvironment(model)
         }

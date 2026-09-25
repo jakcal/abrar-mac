@@ -5,31 +5,48 @@ struct PrayerRowView: View {
     let timeZone: TimeZone
     let isCurrent: Bool
     let isNext: Bool
+    let isMuted: Bool
     let now: Date
 
+    private var hasPassed: Bool { time.date <= now && !isCurrent }
+
     var body: some View {
-        HStack {
+        HStack(spacing: 10) {
+            Image(systemName: time.prayer.symbolName)
+                .symbolRenderingMode(.hierarchical)
+                .foregroundStyle(isNext ? AnyShapeStyle(.tint) : AnyShapeStyle(.secondary))
+                .frame(width: 20)
             Text(time.prayer.displayName)
-                .fontWeight(isNext ? .semibold : .regular)
-            if isNext {
-                Text("in \(PrayerFormatting.countdown(from: now, to: time.date))")
-                    .font(.caption)
+                .fontWeight(isNext || isCurrent ? .semibold : .regular)
+            if isCurrent {
+                Text("Now")
+                    .font(.caption2.weight(.semibold))
+                    .padding(.horizontal, 6)
+                    .padding(.vertical, 1)
+                    .background(Capsule().fill(Color.primary.opacity(0.08)))
                     .foregroundStyle(.secondary)
             }
             Spacer()
+            if isMuted {
+                Image(systemName: "bell.slash")
+                    .font(.caption)
+                    .foregroundStyle(.tertiary)
+                    .help("No notification for \(time.prayer.displayName)")
+            }
             Text(PrayerFormatting.time(time.date, in: timeZone))
                 .monospacedDigit()
                 .fontWeight(isNext ? .semibold : .regular)
         }
-        .foregroundStyle(time.prayer.isObligatory ? .primary : .secondary)
-        .padding(.horizontal, 8)
-        .padding(.vertical, 5)
-        .background(background, in: RoundedRectangle(cornerRadius: 6))
-    }
-
-    private var background: AnyShapeStyle {
-        if isNext { return AnyShapeStyle(Color.accentColor.opacity(0.22)) }
-        if isCurrent { return AnyShapeStyle(.quaternary) }
-        return AnyShapeStyle(.clear)
+        .foregroundStyle(hasPassed || !time.prayer.isObligatory ? .secondary : .primary)
+        .padding(.horizontal, 10)
+        .padding(.vertical, 6)
+        .background {
+            if isNext {
+                RoundedRectangle(cornerRadius: Metrics.rowRadius, style: .continuous)
+                    .fill(Color.accentColor.opacity(0.14))
+            }
+        }
+        .accessibilityElement(children: .combine)
+        .accessibilityAddTraits(isNext ? .isSelected : [])
     }
 }

@@ -13,6 +13,19 @@ enum PrayerFormatting {
         return String(format: "%d:%02d", minutes / 60, minutes % 60)
     }
 
+    /// Whole hours and minutes left, rounded up like `countdown`.
+    static func remaining(from now: Date, to date: Date) -> (hours: Int, minutes: Int) {
+        let minutes = max(0, Int((date.timeIntervalSince(now) / 60).rounded(.up)))
+        return (minutes / 60, minutes % 60)
+    }
+
+    /// "1 hour, 24 minutes", for VoiceOver.
+    static func spokenCountdown(from now: Date, to date: Date) -> String {
+        let left = remaining(from: now, to: date)
+        return Duration.seconds(left.hours * 3600 + left.minutes * 60)
+            .formatted(.units(allowed: [.hours, .minutes], width: .wide))
+    }
+
     static func menuBarTitle(next: PrayerTime?, now: Date) -> String {
         guard let next else { return "Abrar" }
         return "\(next.prayer.displayName) \(countdown(from: now, to: next.date))"

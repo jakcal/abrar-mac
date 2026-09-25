@@ -2,67 +2,122 @@ import SwiftUI
 
 struct MenuBarPanel: View {
     @Environment(PrayerSchedule.self) private var schedule
+    @Environment(SettingsStore.self) private var store
+    @Environment(AudioPlayerService.self) private var player
+    @Environment(ReaderModel.self) private var reader
     @Environment(\.openWindow) private var openWindow
     @Environment(\.openSettings) private var openSettings
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            header
+            PanelHeader(place: schedule.place, now: schedule.now, editLocation: showSettings)
             if let today = schedule.today, let place = schedule.place {
-                VStack(spacing: 2) {
-                    ForEach(today.times) { time in
-                        PrayerRowView(
-                            time: time,
-                            timeZone: place.timeZone,
-                            isCurrent: time.prayer == schedule.currentPrayer?.prayer,
-                            isNext: time.id == schedule.nextPrayer?.id,
-                            now: schedule.now
-                        )
-                    }
+                if let next = schedule.nextPrayer {
+                    NextPrayerCard(next: next, window: schedule.nextPrayerWindow, timeZone: place.timeZone, now: schedule.now)
                 }
+                prayerList(today, timeZone: place.timeZone)
             } else {
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("Set your location to see prayer times.")
-                        .foregroundStyle(.secondary)
-                    Button("Choose Location…", action: showSettings)
-                }
+                LocationPrompt(chooseCity: showSettings)
             }
-            Divider()
-            footer
+            if let surah = player.surah {
+                NowPlayingStrip(surah: surah) { showReader(at: surah) }
+            }
+            PanelFooter(continueSurah: reader.selectedSurah, openQuran: { showReader() }, openSettings: showSettings)
         }
-        .padding(14)
-        .frame(width: 280)
+        .padding(12)
+        .frame(width: Metrics.panelWidth)
     }
 
-    private var header: some View {
-        VStack(alignment: .leading, spacing: 2) {
-            Text(schedule.place?.displayName ?? "Abrar")
-                .font(.headline)
-            Text(schedule.now.formatted(date: .complete, time: .omitted))
-                .font(.caption)
-                .foregroundStyle(.secondary)
+    private func prayerList(_ day: PrayerDay, timeZone: TimeZone) -> some View {
+        let current = schedule.currentPrayer?.prayer
+        return VStack(spacing: 1) {
+            ForEach(day.times) { time in
+                PrayerRowView(
+                    time: time,
+                    timeZone: timeZone,
+                    isCurrent: time.prayer.isObligatory && time.prayer == current,
+                    isNext: time.id == schedule.nextPrayer?.id,
+                    isMuted: time.prayer.isObligatory && !store.settings.notifiedPrayers.contains(time.prayer),
+                    now: schedule.now
+                )
+            }
         }
     }
 
-    private var footer: some View {
-        HStack {
-            Button("Quran", systemImage: "book") {
-                openWindow(id: WindowID.quran)
-                NSApp.activate()
-            }
-            Button("Settings", systemImage: "gearshape", action: showSettings)
-            Spacer()
-            Button("Quit", systemImage: "power") {
-                NSApp.terminate(nil)
-            }
-            .keyboardShortcut("q")
+    private func showReader(at surah: Surah? = nil) {
+        if let surah {
+            reader.open(surah: surah.id, ayah: player.currentAyah ?? 1)
         }
-        .labelStyle(.titleAndIcon)
-        .buttonStyle(.borderless)
+        openWindow(id: WindowID.quran)
+        NSApp.activate()
     }
 
     private func showSettings() {
         NSApp.activate()
         openSettings()
+    }
+}
+
+private struct PanelHeader: View {
+    let place: Place?
+    let now: Date
+    var editLocation: () -> Void
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            BrandMark()
+            HStack(alignment: .center) {
+                VStack(alignment: .leading, spacing: 1) {
+                    Text(place?.name ?? "Prayer Times")
+                        .font(.title3.weight(.semibold))
+                        .lineLimit(1)
+                    Text(dateText)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                Spacer()
+                if place != nil {
+                    Button("Change Location", systemImage: "location", action: editLocation)
+                        .buttonStyle(.icon)
+                        .foregroundStyle(.secondary)
+                        .help(place?.displayName ?? "Change location")
+                }
+            }
+        }
+        .padding(.horizontal, 4)
+    }
+
+    private var dateText: String {
+        var style = Date.FormatStyle(date: .complete, time: .omitted)
+        style.timeZone = place?.timeZone ?? .current
+        return now.formatted(style)
+    }
+}
+
+private struct PanelFooter: View {
+    let continueSurah: Surah?
+    var openQuran: () -> Void
+    var openSettings: () -> Void
+
+    var body: some View {
+        HStack(spacing: 4) {
+            Button(action: openQuran) {
+                Label(continueSurah.map { "Continue \($0.nameTransliterated)" } ?? "Open Quran", systemImage: "book.pages")
+                    .lineLimit(1)
+                    .frame(maxWidth: .infinity)
+            }
+            .glassButtonStyle()
+            .help(continueSurah == nil ? "Open the Quran" : "Open the Quran where you left off")
+            .controlSize(.large)
+            Button("Settings", systemImage: "gearshape", action: openSettings)
+                .buttonStyle(.icon(size: 32))
+                .foregroundStyle(.secondary)
+                .help("Settings")
+            Button("Quit Abrar", systemImage: "power") { NSApp.terminate(nil) }
+                .buttonStyle(.icon(size: 32))
+                .foregroundStyle(.secondary)
+                .keyboardShortcut("q")
+                .help("Quit Abrar")
+        }
     }
 }
