@@ -14,9 +14,11 @@ final class AppModel {
     let downloads: DownloadManager
     let location: LocationController
     let updates: UpdateController
+    let adhkar: AdhkarModel
 
     @ObservationIgnored private let adhan: AdhanPlaying = AdhanAudioPlayer()
-    @ObservationIgnored private let notificationPresenter = NotificationPresenter()
+    @ObservationIgnored private var notificationPresenter: NotificationPresenter?
+    @ObservationIgnored private var adhkarWindow: AdhkarWindowController?
     @ObservationIgnored private var systemEvents: SystemEvents?
     @ObservationIgnored private var rescheduleTask: Task<Void, Never>?
 
@@ -36,6 +38,7 @@ final class AppModel {
         downloads = DownloadManager(storage: services.audioStorage, timings: services.timings)
         location = LocationController(provider: CoreLocationService(), store: settings)
         updates = UpdateController(checker: services.releases)
+        adhkar = AdhkarModel(quran: services.quran)
 
         settings.onChange = { [weak self] old, new in self?.settingsChanged(from: old, to: new) }
         schedule.onPrayerTime = { [weak self] time in self?.prayerStarted(time) }
@@ -56,6 +59,12 @@ final class AppModel {
         adhan.stop()
     }
 
+    func showAdhkar(_ session: AdhkarSession) {
+        let controller = adhkarWindow ?? AdhkarWindowController(model: adhkar)
+        adhkarWindow = controller
+        controller.show(session)
+    }
+
     func fireTestNotification() {
         Task {
             _ = await services.notifications.requestAuthorization()
@@ -64,7 +73,9 @@ final class AppModel {
     }
 
     private func start() {
-        UNUserNotificationCenter.current().delegate = notificationPresenter
+        let presenter = NotificationPresenter { [weak self] session in self?.showAdhkar(session) }
+        notificationPresenter = presenter
+        UNUserNotificationCenter.current().delegate = presenter
         schedule.start()
         player.start()
         try? FileManager.default.removeItem(at: AppPaths.legacyAudio)
@@ -89,7 +100,8 @@ final class AppModel {
             schedule.update(place: new.activePlace, config: new.calculationConfig)
         }
         if placeChanged || configChanged || old.notifiedPrayers != new.notifiedPrayers
-            || old.prayerSounds != new.prayerSounds {
+            || old.prayerSounds != new.prayerSounds || old.dhikrReminders != new.dhikrReminders
+            || old.adhkar != new.adhkar {
             scheduleNotifications()
         }
         if old.playbackRate != new.playbackRate {
@@ -125,13 +137,23 @@ final class AppModel {
         rescheduleTask?.cancel()
         rescheduleTask = Task { [weak self] in
             try? await Task.sleep(for: .milliseconds(500))
-            guard let self, !Task.isCancelled, let place = schedule.place else { return }
-            await services.notifications.reschedule(
-                days: schedule.upcomingDays(7),
-                place: place,
-                enabled: settings.settings.notifiedPrayers,
-                sounds: settings.settings.prayerSounds
-            )
+            guard let self, !Task.isCancelled else { return }
+            let current = settings.settings
+            let days = schedule.upcomingDays(7)
+            if let place = schedule.place {
+                await services.notifications.reschedule(
+                    days: days,
+                    place: place,
+                    enabled: current.notifiedPrayers,
+                    sounds: current.prayerSounds
+                )
+            }
+            await services.notifications.reschedule(dhikr: DhikrPlanner.plan(
+                reminders: current.dhikrReminders,
+                adhkar: current.adhkar,
+                days: days,
+                now: Date()
+            ))
         }
     }
 }

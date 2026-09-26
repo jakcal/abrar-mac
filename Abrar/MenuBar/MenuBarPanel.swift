@@ -6,6 +6,8 @@ struct MenuBarPanel: View {
     @Environment(AudioPlayerService.self) private var player
     @Environment(ReaderModel.self) private var reader
     @Environment(UpdateController.self) private var updates
+    @Environment(AdhkarModel.self) private var adhkar
+    @Environment(AppModel.self) private var app
     @Environment(\.openWindow) private var openWindow
     @Environment(\.openSettings) private var openSettings
 
@@ -20,13 +22,21 @@ struct MenuBarPanel: View {
             } else {
                 LocationPrompt(chooseCity: showSettings)
             }
+            if let session = adhkarDue {
+                AdhkarStrip(session: session) { app.showAdhkar(session) }
+            }
             if let surah = player.surah {
                 NowPlayingStrip(surah: surah) { showReader(at: surah) }
             }
             if let release = updates.available {
                 UpdateBanner(release: release, download: updates.download)
             }
-            PanelFooter(continueSurah: reader.selectedSurah, openQuran: { showReader() }, openSettings: showSettings)
+            PanelFooter(
+                continueSurah: reader.selectedSurah,
+                openQuran: { showReader() },
+                openAdhkar: { app.showAdhkar(currentAdhkar ?? .morning) },
+                openSettings: showSettings
+            )
         }
         .padding(12)
         .frame(width: Metrics.panelWidth)
@@ -46,6 +56,17 @@ struct MenuBarPanel: View {
                 )
             }
         }
+    }
+
+    private var currentAdhkar: AdhkarSession? {
+        AdhkarSession.current(in: schedule.today?.times ?? [], at: schedule.now)
+    }
+
+    /// The adhkar for now, if the user turned them on and hasn't finished them.
+    private var adhkarDue: AdhkarSession? {
+        guard let session = currentAdhkar, store.settings.adhkar.isEnabled(session) else { return nil }
+        let items = AdhkarCatalog.items(for: session)
+        return adhkar.completedCount(in: session) < items.count ? session : nil
     }
 
     private func showReader(at surah: Surah? = nil) {
@@ -101,6 +122,7 @@ private struct PanelHeader: View {
 private struct PanelFooter: View {
     let continueSurah: Surah?
     var openQuran: () -> Void
+    var openAdhkar: () -> Void
     var openSettings: () -> Void
 
     var body: some View {
@@ -113,6 +135,10 @@ private struct PanelFooter: View {
             .glassButtonStyle()
             .help(continueSurah == nil ? "Open the Quran" : "Open the Quran where you left off")
             .controlSize(.large)
+            Button("Adhkar", systemImage: "sparkles", action: openAdhkar)
+                .buttonStyle(.icon(size: 32))
+                .foregroundStyle(.secondary)
+                .help("Open the daily adhkar")
             Button("Settings", systemImage: "gearshape", action: openSettings)
                 .buttonStyle(.icon(size: 32))
                 .foregroundStyle(.secondary)

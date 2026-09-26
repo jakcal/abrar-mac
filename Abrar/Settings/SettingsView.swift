@@ -12,6 +12,9 @@ struct SettingsView: View {
             NotificationSettingsView()
                 .frame(width: 540, height: 440)
                 .tabItem { Label("Notifications", systemImage: "bell") }
+            DhikrSettingsView()
+                .frame(width: 540, height: 620)
+                .tabItem { Label("Dhikr", systemImage: "sparkles") }
             AudioSettingsView()
                 .frame(width: 540, height: 520)
                 .tabItem { Label("Audio", systemImage: "headphones") }

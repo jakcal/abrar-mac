@@ -13,6 +13,10 @@ Abrar is a free, open-source macOS app for prayer times and the Qur'an. It lives
   - Custom Fajr/Isha angles and per-prayer minute adjustments
 - **Location**: automatic via CoreLocation, or pick from a bundled list of cities.
 - **Notifications**: one per prayer, scheduled 7 days ahead. Each prayer can be turned off or set to the adhan, the standard notification tone, or silent (banner only). The full adhan can optionally play while the app is running.
+- **Dhikr**:
+  - Reminders through the day (Astaghfirullah, Alhamdulillah, SubhanAllah and more, or your own phrases), with the interval, active hours and sound of your choice
+  - Morning, evening and before-sleep adhkar, each with its own notification (after Fajr, after Asr, or at a set time) that can be turned on or off
+  - An adhkar window with a counter on each dhikr, opened from the notification or the menu bar
 - **Qur'an reader**: all 114 surahs in Uthmani script (Tanzil), searchable by name or number. You can change the font size, bookmark ayahs, and the app remembers where you stopped reading.
 - **Recitation**:
   - Ten reciters to choose from (same catalog as quran.com)

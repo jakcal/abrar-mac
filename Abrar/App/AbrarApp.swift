@@ -40,5 +40,6 @@ private extension View {
             .environment(model.downloads)
             .environment(model.location)
             .environment(model.updates)
+            .environment(model.adhkar)
     }
 }

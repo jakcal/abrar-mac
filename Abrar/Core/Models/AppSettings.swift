@@ -21,6 +21,8 @@ struct AppSettings: Codable, Equatable, Sendable {
     var followRecitation = true
     var playbackRate: Double = 1
     var checkForUpdates = true
+    var dhikrReminders = DhikrReminders()
+    var adhkar = AdhkarSettings()
 
     init() {}
 
@@ -42,6 +44,7 @@ struct AppSettings: Codable, Equatable, Sendable {
         case locationMode, manualPlace, detectedPlace, method, madhab
         case fajrAngleOverride, ishaAngleOverride, offsets, notifiedPrayers
         case playFullAdhan, prayerSounds, reciterID, quranFontSize, followRecitation, playbackRate, checkForUpdates
+        case dhikrReminders, adhkar
     }
 
     // Missing keys fall back to defaults so settings saved by older versions keep loading.
@@ -64,5 +67,7 @@ struct AppSettings: Codable, Equatable, Sendable {
         followRecitation = try c.decodeIfPresent(Bool.self, forKey: .followRecitation) ?? d.followRecitation
         playbackRate = try c.decodeIfPresent(Double.self, forKey: .playbackRate) ?? d.playbackRate
         checkForUpdates = try c.decodeIfPresent(Bool.self, forKey: .checkForUpdates) ?? d.checkForUpdates
+        dhikrReminders = try c.decodeIfPresent(DhikrReminders.self, forKey: .dhikrReminders) ?? d.dhikrReminders
+        adhkar = try c.decodeIfPresent(AdhkarSettings.self, forKey: .adhkar) ?? d.adhkar
     }
 }
