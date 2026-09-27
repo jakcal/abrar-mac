@@ -41,7 +41,21 @@ struct DhikrPlannerTests {
         reminders.start = 0
         reminders.end = 23 * 60
         reminders.interval = 30
-        #expect(DhikrPlanner.reminderMinutes(reminders).count == DhikrPlanner.maxReminders)
+        let minutes = DhikrPlanner.reminderMinutes(reminders)
+        #expect(minutes.count <= DhikrPlanner.maxReminders)
+        #expect(DhikrPlanner.effectiveInterval(reminders) == 75)
+        #expect(minutes.last == 1350)
+    }
+
+    @Test func cappedRemindersCoverWindowPastMidnight() {
+        var reminders = DhikrReminders()
+        reminders.start = 4
+        reminders.end = 0
+        reminders.interval = 30
+        let minutes = DhikrPlanner.reminderMinutes(reminders)
+        #expect(minutes.count <= DhikrPlanner.maxReminders)
+        #expect(minutes.first == 4)
+        #expect(minutes.last! > 22 * 60)
     }
 
     @Test func noRemindersWithoutPhrases() {

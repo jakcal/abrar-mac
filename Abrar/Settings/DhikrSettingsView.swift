@@ -96,8 +96,8 @@ struct DhikrSettingsView: View {
         if reminders.isEnabled && reminders.rotation.isEmpty {
             Label("Turn on at least one phrase below.", systemImage: "exclamationmark.triangle.fill")
                 .foregroundStyle(.orange)
-        } else if count >= DhikrPlanner.maxReminders {
-            Text("\(count) reminders a day, the most Abrar can schedule alongside prayer alerts. Widen the interval to spread them out.")
+        } else if DhikrPlanner.effectiveInterval(reminders) > max(reminders.interval, 15) {
+            Text("\(count) reminders a day, every \(DhikrPlanner.effectiveInterval(reminders)) minutes. Abrar can schedule only \(DhikrPlanner.maxReminders) alongside prayer alerts, so they're spread across your hours.")
         } else {
             Text("\(count) reminder\(count == 1 ? "" : "s") a day.")
         }

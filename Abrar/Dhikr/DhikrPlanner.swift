@@ -45,13 +45,24 @@ enum DhikrPlanner {
         }
     }
 
-    /// Times of day from the start to the end of the window, inclusive, capped at `maxReminders`.
+    /// Times of day from the start to the end of the window, inclusive, at most `maxReminders`.
     static func reminderMinutes(_ reminders: DhikrReminders) -> [Int] {
-        let interval = max(reminders.interval, 15)
-        let end = reminders.end < reminders.start ? reminders.end + 24 * 60 : reminders.end
-        return stride(from: reminders.start, through: end, by: interval)
-            .prefix(maxReminders)
+        stride(from: reminders.start, through: reminders.start + windowLength(reminders), by: effectiveInterval(reminders))
             .map { $0 % (24 * 60) }
+    }
+
+    /// The chosen interval, widened to a multiple of 5 minutes when the window would need more than `maxReminders`,
+    /// so reminders still reach the end of the window.
+    static func effectiveInterval(_ reminders: DhikrReminders) -> Int {
+        let length = windowLength(reminders)
+        let widest = (length + maxReminders - 2) / (maxReminders - 1)
+        let needed = (widest + 4) / 5 * 5
+        return max(reminders.interval, 15, needed)
+    }
+
+    private static func windowLength(_ reminders: DhikrReminders) -> Int {
+        let end = reminders.end < reminders.start ? reminders.end + 24 * 60 : reminders.end
+        return end - reminders.start
     }
 
     static func adhkarAlerts(_ settings: AdhkarSettings, days: [PrayerDay], now: Date) -> [AdhkarAlert] {
