@@ -20,6 +20,18 @@ enum AppPaths {
         applicationSupport.appendingPathComponent("Audio", isDirectory: true)
     }
 
+    /// Recordings the user added.
+    static var customAdhans: URL {
+        applicationSupport.appendingPathComponent("Adhans", isDirectory: true)
+    }
+
+    /// Besides the app bundle, where UserNotifications looks for custom sounds.
+    static var notificationSounds: URL {
+        let library = FileManager.default.urls(for: .libraryDirectory, in: .userDomainMask).first
+            ?? FileManager.default.temporaryDirectory
+        return library.appendingPathComponent("Sounds", isDirectory: true)
+    }
+
     static var isRunningTests: Bool {
         ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil
     }

@@ -3,7 +3,7 @@ import AVFoundation
 @MainActor
 protocol AdhanPlaying: AnyObject {
     var isPlaying: Bool { get }
-    func play()
+    func play(_ voice: AdhanVoice)
     func stop()
 }
 
@@ -13,8 +13,8 @@ final class AdhanAudioPlayer: AdhanPlaying {
 
     var isPlaying: Bool { player?.isPlaying ?? false }
 
-    func play() {
-        guard let url = Bundle.main.url(forResource: "adhan_full", withExtension: "m4a") else { return }
+    func play(_ voice: AdhanVoice) {
+        guard let url = voice.fullAdhan else { return }
         player = try? AVAudioPlayer(contentsOf: url)
         player?.play()
     }

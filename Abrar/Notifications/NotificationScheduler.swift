@@ -1,10 +1,17 @@
 import Foundation
 import UserNotifications
 
+/// A sample of an alert, sent right away so the user can see and hear it.
+enum TestAlert: Sendable {
+    case reminder(DhikrPhrase, sound: AlertSound)
+    case adhkar(AdhkarSession)
+}
+
 protocol NotificationScheduling: Sendable {
     func requestAuthorization() async -> Bool
-    func reschedule(days: [PrayerDay], place: Place, enabled: Set<PrayerName>, sounds: PrayerSounds) async
+    func reschedule(days: [PrayerDay], place: Place, enabled: Set<PrayerName>, sounds: PrayerSounds, adhan: AdhanVoice) async
     func reschedule(dhikr plan: DhikrPlan) async
+    func send(_ test: TestAlert) async
     func scheduleTestNotification(after seconds: TimeInterval) async
 }
 
@@ -12,13 +19,12 @@ struct UserNotificationScheduler: NotificationScheduling {
     static let identifierPrefix = "prayer."
     static let dhikrPrefix = "dhikr."
     static let adhkarKey = "adhkar"
-    static let soundName = UNNotificationSoundName("adhan.caf")
 
     func requestAuthorization() async -> Bool {
         (try? await UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound])) ?? false
     }
 
-    func reschedule(days: [PrayerDay], place: Place, enabled: Set<PrayerName>, sounds: PrayerSounds) async {
+    func reschedule(days: [PrayerDay], place: Place, enabled: Set<PrayerName>, sounds: PrayerSounds, adhan: AdhanVoice) async {
         let center = UNUserNotificationCenter.current()
         let stale = await center.pendingNotificationRequests()
             .map(\.identifier)
@@ -34,7 +40,7 @@ struct UserNotificationScheduler: NotificationScheduling {
             )
             let request = UNNotificationRequest(
                 identifier: "\(Self.identifierPrefix)\(Int(time.date.timeIntervalSince1970)).\(time.prayer.rawValue)",
-                content: content(for: time, place: place, sound: sounds[time.prayer]),
+                content: content(for: time, place: place, sound: sounds[time.prayer], adhan: adhan),
                 trigger: UNCalendarNotificationTrigger(dateMatching: components, repeats: false)
             )
             try? await center.add(request)
@@ -49,13 +55,9 @@ struct UserNotificationScheduler: NotificationScheduling {
         center.removePendingNotificationRequests(withIdentifiers: stale)
 
         for slot in plan.reminders {
-            let content = UNMutableNotificationContent()
-            content.title = slot.phrase.transliteration
-            content.body = [slot.phrase.arabic, slot.phrase.meaning].filter { !$0.isEmpty }.joined(separator: " · ")
-            content.sound = plan.reminderSound == .silent ? nil : .default
             try? await center.add(UNNotificationRequest(
                 identifier: "\(Self.dhikrPrefix)reminder.\(slot.minute)",
-                content: content,
+                content: reminderContent(slot.phrase, sound: plan.reminderSound),
                 trigger: UNCalendarNotificationTrigger(dateMatching: Self.timeOfDay(slot.minute), repeats: true)
             ))
         }
@@ -80,6 +82,14 @@ struct UserNotificationScheduler: NotificationScheduling {
         DateComponents(hour: minute / 60, minute: minute % 60)
     }
 
+    private func reminderContent(_ phrase: DhikrPhrase, sound: AlertSound) -> UNMutableNotificationContent {
+        let content = UNMutableNotificationContent()
+        content.title = phrase.transliteration
+        content.body = [phrase.arabic, phrase.meaning].filter { !$0.isEmpty }.joined(separator: " · ")
+        content.sound = sound == .silent ? nil : .default
+        return content
+    }
+
     private func adhkarContent(_ session: AdhkarSession) -> UNMutableNotificationContent {
         let content = UNMutableNotificationContent()
         content.title = "\(session.title) · \(session.arabicTitle)"
@@ -89,11 +99,23 @@ struct UserNotificationScheduler: NotificationScheduling {
         return content
     }
 
+    func send(_ test: TestAlert) async {
+        let content = switch test {
+        case let .reminder(phrase, sound): reminderContent(phrase, sound: sound)
+        case let .adhkar(session): adhkarContent(session)
+        }
+        try? await UNUserNotificationCenter.current().add(UNNotificationRequest(
+            identifier: "test.\(UUID().uuidString)",
+            content: content,
+            trigger: UNTimeIntervalNotificationTrigger(timeInterval: 1, repeats: false)
+        ))
+    }
+
     func scheduleTestNotification(after seconds: TimeInterval) async {
         let content = UNMutableNotificationContent()
         content.title = "Abrar test"
         content.body = "Notifications are working."
-        content.sound = UNNotificationSound(named: Self.soundName)
+        content.sound = UNNotificationSound(named: UNNotificationSoundName(AdhanVoice.builtIn[0].notificationSound))
         let request = UNNotificationRequest(
             identifier: "test.\(UUID().uuidString)",
             content: content,
@@ -102,12 +124,12 @@ struct UserNotificationScheduler: NotificationScheduling {
         try? await UNUserNotificationCenter.current().add(request)
     }
 
-    private func content(for time: PrayerTime, place: Place, sound: AlertSound) -> UNMutableNotificationContent {
+    private func content(for time: PrayerTime, place: Place, sound: AlertSound, adhan: AdhanVoice) -> UNMutableNotificationContent {
         let content = UNMutableNotificationContent()
         content.title = "\(time.prayer.displayName) · \(time.prayer.arabicName)"
         content.body = "It's time for \(time.prayer.displayName) in \(place.name) (\(PrayerFormatting.time(time.date, in: place.timeZone)))."
         switch sound {
-        case .adhan: content.sound = UNNotificationSound(named: Self.soundName)
+        case .adhan: content.sound = UNNotificationSound(named: UNNotificationSoundName(adhan.notificationSound))
         case .tone: content.sound = .default
         case .silent: content.sound = nil
         }

@@ -10,13 +10,13 @@ struct DhikrSettingsView: View {
         let reminders = store.settings.dhikrReminders
         Form {
             Section {
-                AdhkarRow(session: .morning, isOn: $store.settings.adhkar.morning) {
+                AdhkarRow(session: .morning, isOn: $store.settings.adhkar.morning, test: test) {
                     DelayPicker(delay: $store.settings.adhkar.morningDelay, prayer: "Fajr")
                 }
-                AdhkarRow(session: .evening, isOn: $store.settings.adhkar.evening) {
+                AdhkarRow(session: .evening, isOn: $store.settings.adhkar.evening, test: test) {
                     DelayPicker(delay: $store.settings.adhkar.eveningDelay, prayer: "Asr")
                 }
-                AdhkarRow(session: .night, isOn: $store.settings.adhkar.night) {
+                AdhkarRow(session: .night, isOn: $store.settings.adhkar.night, test: test) {
                     TimeOfDayPicker(title: "At", minute: $store.settings.adhkar.nightTime)
                 }
             } header: {
@@ -52,7 +52,15 @@ struct DhikrSettingsView: View {
             } header: {
                 Text("Reminders")
             } footer: {
-                reminderSummary(reminders)
+                HStack(alignment: .firstTextBaseline) {
+                    reminderSummary(reminders)
+                    Spacer()
+                    Button("Send Test") {
+                        guard let phrase = reminders.rotation.randomElement() else { return }
+                        app.sendTest(.reminder(phrase, sound: reminders.sound))
+                    }
+                    .disabled(reminders.rotation.isEmpty)
+                }
             }
 
             Section {
@@ -103,6 +111,10 @@ struct DhikrSettingsView: View {
         }
     }
 
+    private func test(_ session: AdhkarSession) {
+        app.sendTest(.adhkar(session))
+    }
+
     private var trimmedPhrase: String {
         newPhrase.trimmingCharacters(in: .whitespacesAndNewlines)
     }
@@ -143,6 +155,7 @@ struct DhikrSettingsView: View {
 private struct AdhkarRow<Timing: View>: View {
     let session: AdhkarSession
     @Binding var isOn: Bool
+    var test: (AdhkarSession) -> Void
     @ViewBuilder var timing: Timing
 
     var body: some View {
@@ -150,6 +163,10 @@ private struct AdhkarRow<Timing: View>: View {
             HStack(spacing: 12) {
                 timing
                     .disabled(!isOn)
+                Button("Send Test", systemImage: "bell.badge") { test(session) }
+                    .buttonStyle(.icon(size: 24))
+                    .foregroundStyle(.secondary)
+                    .help("Send a test notification")
                 Toggle(session.title, isOn: $isOn)
                     .labelsHidden()
             }

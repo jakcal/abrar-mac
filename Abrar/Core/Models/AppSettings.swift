@@ -16,6 +16,8 @@ struct AppSettings: Codable, Equatable, Sendable {
     var notifiedPrayers: Set<PrayerName> = Set(PrayerName.obligatory)
     var playFullAdhan = false
     var prayerSounds = PrayerSounds()
+    var adhanVoiceID = AdhanVoice.defaultID
+    var customAdhans: [CustomAdhan] = []
     var reciterID = Reciter.defaultID
     var quranFontSize: Double = 30
     var followRecitation = true
@@ -28,6 +30,15 @@ struct AppSettings: Codable, Equatable, Sendable {
 
     var activePlace: Place? {
         locationMode == .manual ? manualPlace : detectedPlace
+    }
+
+    var adhanVoices: [AdhanVoice] {
+        AdhanVoice.builtIn + customAdhans.map(AdhanVoice.init(custom:))
+    }
+
+    /// The chosen voice, or the default if it was removed.
+    var adhanVoice: AdhanVoice {
+        adhanVoices.first { $0.id == adhanVoiceID } ?? AdhanVoice.builtIn[0]
     }
 
     var calculationConfig: CalculationConfig {
@@ -43,7 +54,7 @@ struct AppSettings: Codable, Equatable, Sendable {
     private enum CodingKeys: String, CodingKey {
         case locationMode, manualPlace, detectedPlace, method, madhab
         case fajrAngleOverride, ishaAngleOverride, offsets, notifiedPrayers
-        case playFullAdhan, prayerSounds, reciterID, quranFontSize, followRecitation, playbackRate, checkForUpdates
+        case playFullAdhan, prayerSounds, adhanVoiceID, customAdhans, reciterID, quranFontSize, followRecitation, playbackRate, checkForUpdates
         case dhikrReminders, adhkar
     }
 
@@ -62,6 +73,8 @@ struct AppSettings: Codable, Equatable, Sendable {
         notifiedPrayers = try c.decodeIfPresent(Set<PrayerName>.self, forKey: .notifiedPrayers) ?? d.notifiedPrayers
         playFullAdhan = try c.decodeIfPresent(Bool.self, forKey: .playFullAdhan) ?? d.playFullAdhan
         prayerSounds = try c.decodeIfPresent(PrayerSounds.self, forKey: .prayerSounds) ?? d.prayerSounds
+        adhanVoiceID = try c.decodeIfPresent(String.self, forKey: .adhanVoiceID) ?? d.adhanVoiceID
+        customAdhans = try c.decodeIfPresent([CustomAdhan].self, forKey: .customAdhans) ?? d.customAdhans
         reciterID = try c.decodeIfPresent(String.self, forKey: .reciterID) ?? d.reciterID
         quranFontSize = try c.decodeIfPresent(Double.self, forKey: .quranFontSize) ?? d.quranFontSize
         followRecitation = try c.decodeIfPresent(Bool.self, forKey: .followRecitation) ?? d.followRecitation

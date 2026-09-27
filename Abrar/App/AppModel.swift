@@ -52,7 +52,7 @@ final class AppModel {
     }
 
     func playAdhan() {
-        adhan.play()
+        adhan.play(settings.settings.adhanVoice)
     }
 
     func stopAdhan() {
@@ -63,6 +63,36 @@ final class AppModel {
         let controller = adhkarWindow ?? AdhkarWindowController(model: adhkar)
         adhkarWindow = controller
         controller.show(session)
+    }
+
+    func sendTest(_ alert: TestAlert) {
+        Task {
+            _ = await services.notifications.requestAuthorization()
+            await services.notifications.send(alert)
+        }
+    }
+
+    /// Adds a recording from the user's files and makes it the adhan voice.
+    func importAdhan(from url: URL) async throws {
+        let scoped = url.startAccessingSecurityScopedResource()
+        defer { if scoped { url.stopAccessingSecurityScopedResource() } }
+        let adhan = try await Task.detached { try AdhanImporter.importRecording(at: url) }.value
+        var updated = settings.settings
+        updated.customAdhans.append(adhan)
+        updated.adhanVoiceID = adhan.id.uuidString
+        settings.settings = updated
+    }
+
+    func removeAdhan(id: String) {
+        guard let custom = settings.settings.customAdhans.first(where: { $0.id.uuidString == id }) else { return }
+        var updated = settings.settings
+        if updated.adhanVoiceID == id {
+            adhan.stop()
+            updated.adhanVoiceID = AdhanVoice.defaultID
+        }
+        updated.customAdhans.removeAll { $0.id == custom.id }
+        settings.settings = updated
+        AdhanImporter.remove(custom)
     }
 
     func fireTestNotification() {
@@ -100,7 +130,8 @@ final class AppModel {
             schedule.update(place: new.activePlace, config: new.calculationConfig)
         }
         if placeChanged || configChanged || old.notifiedPrayers != new.notifiedPrayers
-            || old.prayerSounds != new.prayerSounds || old.dhikrReminders != new.dhikrReminders
+            || old.prayerSounds != new.prayerSounds || old.adhanVoice != new.adhanVoice
+            || old.dhikrReminders != new.dhikrReminders
             || old.adhkar != new.adhkar {
             scheduleNotifications()
         }
@@ -129,7 +160,7 @@ final class AppModel {
               current.notifiedPrayers.contains(time.prayer),
               current.prayerSounds[time.prayer] == .adhan else { return }
         player.pause()
-        adhan.play()
+        adhan.play(current.adhanVoice)
     }
 
     /// Debounced so rapid setting changes (steppers) don't race each other.
@@ -145,7 +176,8 @@ final class AppModel {
                     days: days,
                     place: place,
                     enabled: current.notifiedPrayers,
-                    sounds: current.prayerSounds
+                    sounds: current.prayerSounds,
+                    adhan: current.adhanVoice
                 )
             }
             await services.notifications.reschedule(dhikr: DhikrPlanner.plan(

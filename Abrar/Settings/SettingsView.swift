@@ -10,7 +10,7 @@ struct SettingsView: View {
                 .frame(width: 540, height: 560)
                 .tabItem { Label("Calculation", systemImage: "sun.horizon") }
             NotificationSettingsView()
-                .frame(width: 540, height: 440)
+                .frame(width: 540, height: 520)
                 .tabItem { Label("Notifications", systemImage: "bell") }
             DhikrSettingsView()
                 .frame(width: 540, height: 620)
