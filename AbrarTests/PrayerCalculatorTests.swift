@@ -81,4 +81,10 @@ struct PrayerCalculatorTests {
         #expect(PrayerFormatting.countdown(from: now, to: now.addingTimeInterval(30)) == "0:01")
         #expect(PrayerFormatting.countdown(from: now, to: now) == "0:00")
     }
+
+    @Test func soonMatchesTheShownCountdown() {
+        let now = Date(timeIntervalSince1970: 0)
+        #expect(PrayerFormatting.isSoon(now.addingTimeInterval(15 * 60), now: now, within: 15))
+        #expect(!PrayerFormatting.isSoon(now.addingTimeInterval(15 * 60 + 1), now: now, within: 15))
+    }
 }

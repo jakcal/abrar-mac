@@ -23,6 +23,9 @@ struct AppSettings: Codable, Equatable, Sendable {
     var followRecitation = true
     var playbackRate: Double = 1
     var checkForUpdates = true
+    var highlightSoon = true
+    /// Minutes before the next prayer when the menu bar countdown turns red.
+    var highlightSoonMinutes = 15
     var dhikrReminders = DhikrReminders()
     var adhkar = AdhkarSettings()
 
@@ -55,6 +58,7 @@ struct AppSettings: Codable, Equatable, Sendable {
         case locationMode, manualPlace, detectedPlace, method, madhab
         case fajrAngleOverride, ishaAngleOverride, offsets, notifiedPrayers
         case playFullAdhan, prayerSounds, adhanVoiceID, customAdhans, reciterID, quranFontSize, followRecitation, playbackRate, checkForUpdates
+        case highlightSoon, highlightSoonMinutes
         case dhikrReminders, adhkar
     }
 
@@ -80,6 +84,8 @@ struct AppSettings: Codable, Equatable, Sendable {
         followRecitation = try c.decodeIfPresent(Bool.self, forKey: .followRecitation) ?? d.followRecitation
         playbackRate = try c.decodeIfPresent(Double.self, forKey: .playbackRate) ?? d.playbackRate
         checkForUpdates = try c.decodeIfPresent(Bool.self, forKey: .checkForUpdates) ?? d.checkForUpdates
+        highlightSoon = try c.decodeIfPresent(Bool.self, forKey: .highlightSoon) ?? d.highlightSoon
+        highlightSoonMinutes = try c.decodeIfPresent(Int.self, forKey: .highlightSoonMinutes) ?? d.highlightSoonMinutes
         dhikrReminders = try c.decodeIfPresent(DhikrReminders.self, forKey: .dhikrReminders) ?? d.dhikrReminders
         adhkar = try c.decodeIfPresent(AdhkarSettings.self, forKey: .adhkar) ?? d.adhkar
     }

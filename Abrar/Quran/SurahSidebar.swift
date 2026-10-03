@@ -18,6 +18,10 @@ struct SurahSidebar: View {
             )
             .tag(surah.id)
         }
+        .contextMenu(forSelectionType: Int.self, menu: { _ in }, primaryAction: { ids in
+            guard let id = ids.first, let surah = reader.filteredSurahs.first(where: { $0.id == id }) else { return }
+            play(surah)
+        })
         .searchable(text: $reader.searchText, placement: .sidebar, prompt: "Name or number")
         .overlay {
             if reader.filteredSurahs.isEmpty {
@@ -26,6 +30,15 @@ struct SurahSidebar: View {
         }
         .safeAreaInset(edge: .bottom, spacing: 0) {
             DownloadAllView(compact: true)
+        }
+    }
+
+    /// Resumes from the saved position when there is one, like the Play button.
+    private func play(_ surah: Surah) {
+        if player.surah?.id == surah.id {
+            if !player.isPlaying { player.resume() }
+        } else {
+            player.play(surah: surah, reciter: Reciter.with(id: store.settings.reciterID))
         }
     }
 }

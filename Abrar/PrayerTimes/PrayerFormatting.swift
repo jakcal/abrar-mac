@@ -26,6 +26,12 @@ enum PrayerFormatting {
             .formatted(.units(allowed: [.hours, .minutes], width: .wide))
     }
 
+    /// True when `date` is at most `minutes` away, counted like `countdown`.
+    static func isSoon(_ date: Date, now: Date, within minutes: Int) -> Bool {
+        let left = remaining(from: now, to: date)
+        return left.hours * 60 + left.minutes <= minutes
+    }
+
     static func menuBarTitle(next: PrayerTime?, now: Date) -> String {
         guard let next else { return "Abrar" }
         return "\(next.prayer.displayName) \(countdown(from: now, to: next.date))"

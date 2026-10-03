@@ -13,7 +13,7 @@ struct AbrarApp: App {
             MenuBarPanel()
                 .appEnvironment(model)
         } label: {
-            MenuBarLabel(schedule: model.schedule)
+            MenuBarLabel(schedule: model.schedule, settings: model.settings.settings)
         }
         .menuBarExtraStyle(.window)
 

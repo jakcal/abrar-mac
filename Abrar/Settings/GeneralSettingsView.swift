@@ -2,6 +2,7 @@ import SwiftUI
 
 struct GeneralSettingsView: View {
     @Environment(AppModel.self) private var app
+    @Environment(SettingsStore.self) private var store
     @State private var launchAtLogin = false
     @State private var errorMessage: String?
 
@@ -18,6 +19,16 @@ struct GeneralSettingsView: View {
                         .foregroundStyle(.orange)
                         .font(.callout)
                 }
+            }
+            Section {
+                Toggle("Turn the countdown red before a prayer", isOn: Bindable(store).settings.highlightSoon)
+                Stepper(value: Bindable(store).settings.highlightSoonMinutes, in: 1...120) {
+                    Text("Minutes before: \(store.settings.highlightSoonMinutes)")
+                        .monospacedDigit()
+                }
+                .disabled(!store.settings.highlightSoon)
+            } header: {
+                Text("Menu Bar")
             }
             UpdateSettingsSection()
             Section("About") {
