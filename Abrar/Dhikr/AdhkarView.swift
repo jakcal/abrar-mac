@@ -167,7 +167,7 @@ private struct CountBadge: View {
                 Circle().stroke(Color.primary.opacity(0.1), lineWidth: 3)
                 Circle()
                     .trim(from: 0, to: Double(current) / Double(max(total, 1)))
-                    .stroke(isDone ? Color.green : Color.accentColor, style: StrokeStyle(lineWidth: 3, lineCap: .round))
+                    .stroke(isDone ? Color.green : Color.brand, style: StrokeStyle(lineWidth: 3, lineCap: .round))
                     .rotationEffect(.degrees(-90))
                 if isDone {
                     Image(systemName: "checkmark")

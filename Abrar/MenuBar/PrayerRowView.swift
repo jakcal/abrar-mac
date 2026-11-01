@@ -23,8 +23,8 @@ struct PrayerRowView: View {
                     .font(.caption2.weight(.semibold))
                     .padding(.horizontal, 6)
                     .padding(.vertical, 1)
-                    .background(Capsule().fill(Color.primary.opacity(0.08)))
-                    .foregroundStyle(.secondary)
+                    .background(Capsule().fill(Color.gold.opacity(0.18)))
+                    .foregroundStyle(Color.gold)
             }
             Spacer()
             if isMuted {
@@ -43,7 +43,13 @@ struct PrayerRowView: View {
         .background {
             if isNext {
                 RoundedRectangle(cornerRadius: Metrics.rowRadius, style: .continuous)
-                    .fill(Color.accentColor.opacity(0.14))
+                    .fill(Color.brand.opacity(0.14))
+                    .overlay(alignment: .leading) {
+                        Capsule()
+                            .fill(Color.brand)
+                            .frame(width: 3, height: 14)
+                            .padding(.leading, 3)
+                    }
             }
         }
         .accessibilityElement(children: .combine)

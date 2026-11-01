@@ -23,7 +23,7 @@ struct UpdateBanner: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .glassCard(tint: .accentColor)
+        .glassCard(tint: .brand)
         .accessibilityLabel("Abrar \(release.version.description) is available. Download.")
     }
 }

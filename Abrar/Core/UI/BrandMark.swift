@@ -8,7 +8,7 @@ struct BrandMark: View {
         HStack(spacing: 7) {
             ZStack {
                 EightPointStar()
-                    .fill(Color.accentColor.gradient)
+                    .fill(Color.brand.gradient)
                 Image(systemName: "moon.fill")
                     .font(.system(size: 8, weight: .bold))
                     .foregroundStyle(.white)

@@ -12,10 +12,18 @@ struct AdhkarStrip: View {
         let total = AdhkarCatalog.items(for: session).count
         Button(action: open) {
             HStack(spacing: 10) {
-                Image(systemName: session.symbolName)
-                    .symbolRenderingMode(.hierarchical)
-                    .foregroundStyle(.tint)
-                    .frame(width: 20)
+                ZStack {
+                    Circle().stroke(Color.primary.opacity(0.1), lineWidth: 2.5)
+                    Circle()
+                        .trim(from: 0, to: Double(done) / Double(max(total, 1)))
+                        .stroke(Color.brand, style: StrokeStyle(lineWidth: 2.5, lineCap: .round))
+                        .rotationEffect(.degrees(-90))
+                    Image(systemName: session.symbolName)
+                        .font(.system(size: 10, weight: .semibold))
+                        .symbolRenderingMode(.hierarchical)
+                        .foregroundStyle(.tint)
+                }
+                .frame(width: 24, height: 24)
                 VStack(alignment: .leading, spacing: 1) {
                     Text(session.title)
                         .font(.callout.weight(.medium))

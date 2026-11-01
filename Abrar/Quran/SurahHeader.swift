@@ -52,7 +52,7 @@ struct SurahHeader: View {
     /// Faint star behind the title, clipped by the card.
     private var ornament: some View {
         EightPointStar()
-            .stroke(Color.accentColor.opacity(0.12), lineWidth: 1)
+            .stroke(Color.brand.opacity(0.12), lineWidth: 1)
             .frame(width: 220, height: 220)
             .offset(y: -70)
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)

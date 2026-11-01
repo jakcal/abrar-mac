@@ -1,5 +1,12 @@
 import SwiftUI
 
+extension Color {
+    /// Brand teal from the app icon, tuned per appearance. Used instead of the system accent so the app keeps its identity.
+    static let brand = Color("AccentColor")
+    /// Warm gold from the app icon, for ornaments.
+    static let gold = Color(red: 0.86, green: 0.68, blue: 0.32)
+}
+
 enum Metrics {
     static let cardRadius: CGFloat = 18
     static let rowRadius: CGFloat = 10

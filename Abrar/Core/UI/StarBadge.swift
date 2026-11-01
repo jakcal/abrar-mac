@@ -34,9 +34,9 @@ struct StarBadge: View {
     var body: some View {
         ZStack {
             EightPointStar()
-                .fill(isHighlighted ? AnyShapeStyle(Color.accentColor.opacity(0.18)) : AnyShapeStyle(.quaternary.opacity(0.6)))
+                .fill(isHighlighted ? AnyShapeStyle(Color.brand.opacity(0.18)) : AnyShapeStyle(.quaternary.opacity(0.6)))
             EightPointStar()
-                .strokeBorder(isHighlighted ? AnyShapeStyle(Color.accentColor.opacity(0.6)) : AnyShapeStyle(.tertiary), lineWidth: 0.75)
+                .strokeBorder(isHighlighted ? AnyShapeStyle(Color.brand.opacity(0.6)) : AnyShapeStyle(.tertiary), lineWidth: 0.75)
             Text(number, format: .number)
                 .font(.system(size: size * 0.32, weight: .semibold, design: .rounded))
                 .monospacedDigit()

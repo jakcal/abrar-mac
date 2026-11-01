@@ -16,7 +16,14 @@ struct MenuBarPanel: View {
             PanelHeader(place: schedule.place, now: schedule.now, editLocation: showSettings)
             if let today = schedule.today, let place = schedule.place {
                 if let next = schedule.nextPrayer {
-                    NextPrayerCard(next: next, window: schedule.nextPrayerWindow, timeZone: place.timeZone, now: schedule.now)
+                    NextPrayerCard(
+                        next: next,
+                        window: schedule.nextPrayerWindow,
+                        timeZone: place.timeZone,
+                        now: schedule.now,
+                        isSoon: store.settings.highlightSoon
+                            && PrayerFormatting.isSoon(next.date, now: schedule.now, within: store.settings.highlightSoonMinutes)
+                    )
                 }
                 prayerList(today, timeZone: place.timeZone)
             } else {
@@ -44,7 +51,7 @@ struct MenuBarPanel: View {
 
     private func prayerList(_ day: PrayerDay, timeZone: TimeZone) -> some View {
         let current = schedule.currentPrayer?.prayer
-        return VStack(spacing: 1) {
+        return VStack(spacing: 2) {
             ForEach(day.times) { time in
                 PrayerRowView(
                     time: time,
@@ -56,6 +63,8 @@ struct MenuBarPanel: View {
                 )
             }
         }
+        .padding(4)
+        .contentCard(cornerRadius: 14)
     }
 
     private var currentAdhkar: AdhkarSession? {
@@ -89,17 +98,9 @@ private struct PanelHeader: View {
     var editLocation: () -> Void
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            BrandMark()
-            HStack(alignment: .center) {
-                VStack(alignment: .leading, spacing: 1) {
-                    Text(place?.name ?? "Prayer Times")
-                        .font(.title3.weight(.semibold))
-                        .lineLimit(1)
-                    Text(dateText)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
+        VStack(alignment: .leading, spacing: 10) {
+            HStack {
+                BrandMark()
                 Spacer()
                 if place != nil {
                     Button("Change Location", systemImage: "location", action: editLocation)
@@ -108,13 +109,38 @@ private struct PanelHeader: View {
                         .help(place?.displayName ?? "Change location")
                 }
             }
+            VStack(alignment: .leading, spacing: 2) {
+                Text(place?.name ?? "Prayer Times")
+                    .font(.title3.weight(.semibold))
+                    .lineLimit(1)
+                HStack(spacing: 5) {
+                    Text(gregorianText)
+                    Text("·").foregroundStyle(.tertiary)
+                    Text(hijriText)
+                        .foregroundStyle(Color.gold)
+                }
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .lineLimit(1)
+                .minimumScaleFactor(0.8)
+            }
         }
         .padding(.horizontal, 4)
     }
 
-    private var dateText: String {
-        var style = Date.FormatStyle(date: .complete, time: .omitted)
-        style.timeZone = place?.timeZone ?? .current
+    private var timeZone: TimeZone { place?.timeZone ?? .current }
+
+    private var gregorianText: String {
+        var style = Date.FormatStyle.dateTime.weekday(.wide).day().month(.wide)
+        style.timeZone = timeZone
+        return now.formatted(style)
+    }
+
+    /// Umm al-Qura date, e.g. "10 Jumada I 1448 AH".
+    private var hijriText: String {
+        var style = Date.FormatStyle.dateTime.day().month(.wide).year().era()
+        style.calendar = Calendar(identifier: .islamicUmmAlQura)
+        style.timeZone = timeZone
         return now.formatted(style)
     }
 }

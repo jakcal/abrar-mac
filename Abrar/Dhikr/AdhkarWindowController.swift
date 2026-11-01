@@ -20,7 +20,7 @@ final class AdhkarWindowController {
     }
 
     private func makeWindow() -> NSWindow {
-        let controller = NSHostingController(rootView: AdhkarView().environment(model))
+        let controller = NSHostingController(rootView: AdhkarView().tint(Color.brand).environment(model))
         controller.sceneBridgingOptions = [.toolbars]
         let window = NSWindow(contentViewController: controller)
         window.title = "Adhkar"

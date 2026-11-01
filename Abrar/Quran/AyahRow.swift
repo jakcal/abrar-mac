@@ -14,7 +14,7 @@ struct AyahRow: View {
     var body: some View {
         let bookmarked = reader.isBookmarked(ayah)
         HStack(alignment: .top, spacing: 14) {
-            Text("\(ayah.text)\u{00A0}\(Text(marker).foregroundStyle(Color.accentColor))")
+            Text("\(ayah.text)\u{00A0}\(Text(marker).foregroundStyle(Color.brand))")
                 .font(QuranFont.font(size: fontSize))
                 .lineSpacing(fontSize * 0.55)
                 .multilineTextAlignment(.leading)
@@ -54,8 +54,8 @@ struct AyahRow: View {
     private var highlight: some View {
         let shape = RoundedRectangle(cornerRadius: 14, style: .continuous)
         if isRecited {
-            shape.fill(Color.accentColor.opacity(0.10))
-                .overlay(shape.strokeBorder(Color.accentColor.opacity(0.28), lineWidth: 1))
+            shape.fill(Color.brand.opacity(0.10))
+                .overlay(shape.strokeBorder(Color.brand.opacity(0.28), lineWidth: 1))
         } else {
             shape.fill(Color.primary.opacity(isHovering ? 0.035 : 0))
         }

@@ -32,7 +32,8 @@ struct AbrarApp: App {
 
 private extension View {
     func appEnvironment(_ model: AppModel) -> some View {
-        environment(model)
+        tint(Color.brand)
+            .environment(model)
             .environment(model.settings)
             .environment(model.schedule)
             .environment(model.reader)
