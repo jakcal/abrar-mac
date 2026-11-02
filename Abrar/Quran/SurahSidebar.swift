@@ -22,7 +22,11 @@ struct SurahSidebar: View {
             guard let id = ids.first, let surah = reader.filteredSurahs.first(where: { $0.id == id }) else { return }
             play(surah)
         })
-        .searchable(text: $reader.searchText, placement: .sidebar, prompt: "Name or number")
+        .searchable(text: $reader.searchText, placement: .sidebar, prompt: "Name, number or 2:255")
+        // Return on "2:255" jumps straight to the ayah.
+        .onSubmit(of: .search) {
+            if AyahReference(reader.searchText) != nil { reader.go(to: reader.searchText) }
+        }
         .overlay {
             if reader.filteredSurahs.isEmpty {
                 ContentUnavailableView.search(text: reader.searchText)

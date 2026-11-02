@@ -5,6 +5,7 @@ struct AyahRow: View {
     let ayah: Ayah
     let fontSize: Double
     let isRecited: Bool
+    var translation: String?
 
     @Environment(ReaderModel.self) private var reader
     @Environment(AudioPlayerService.self) private var player
@@ -14,12 +15,17 @@ struct AyahRow: View {
     var body: some View {
         let bookmarked = reader.isBookmarked(ayah)
         HStack(alignment: .top, spacing: 14) {
-            Text("\(ayah.text)\u{00A0}\(Text(marker).foregroundStyle(Color.brand))")
-                .font(QuranFont.font(size: fontSize))
-                .lineSpacing(fontSize * 0.55)
-                .multilineTextAlignment(.leading)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .textSelection(.enabled)
+            VStack(alignment: .leading, spacing: 10) {
+                Text("\(ayah.text)\u{00A0}\(Text(marker).foregroundStyle(Color.brand))")
+                    .font(QuranFont.font(size: fontSize))
+                    .lineSpacing(fontSize * 0.55)
+                    .multilineTextAlignment(.leading)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .textSelection(.enabled)
+                if let translation {
+                    TranslationText(number: ayah.number, text: translation, fontSize: fontSize)
+                }
+            }
             AyahActions(
                 isRecited: isRecited,
                 isBookmarked: bookmarked,
@@ -41,7 +47,11 @@ struct AyahRow: View {
             Button(bookmarked ? "Remove Bookmark" : "Bookmark Ayah \(ayah.number)", systemImage: "bookmark") {
                 reader.toggleBookmark(ayah)
             }
-            Button("Copy Ayah", systemImage: "doc.on.doc", action: copy)
+            Divider()
+            Button("Copy Ayah", systemImage: "doc.on.doc") { copy(withTranslation: false) }
+            if translation != nil {
+                Button("Copy with Translation", systemImage: "doc.on.doc.fill") { copy(withTranslation: true) }
+            }
         }
         .accessibilityElement(children: .contain)
         .accessibilityLabel("Ayah \(ayah.number)")
@@ -66,9 +76,58 @@ struct AyahRow: View {
         player.play(ayah: ayah.number, in: surah, reciter: Reciter.with(id: store.settings.reciterID))
     }
 
-    private func copy() {
+    /// Copies the ayah with its reference, e.g. "— Al-Baqara 2:255".
+    private func copy(withTranslation: Bool) {
+        var parts = [ayah.text]
+        if withTranslation, let translation { parts.append(translation) }
+        parts.append("— \(reader.surahName(ayah.surah)) \(ayah.surah):\(ayah.number)")
         NSPasteboard.general.clearContents()
-        NSPasteboard.general.setString(ayah.text, forType: .string)
+        NSPasteboard.general.setString(parts.joined(separator: "\n\n"), forType: .string)
+    }
+}
+
+/// English meaning under the Arabic, left to right, sized relative to the Arabic text.
+private struct TranslationText: View {
+    let number: Int
+    let text: String
+    let fontSize: Double
+
+    var body: some View {
+        Text("\(Text("\(number)").foregroundStyle(.tertiary).monospacedDigit())  \(text)")
+            .font(.system(size: min(22, max(13, fontSize * 0.5))))
+            .lineSpacing(3)
+            .foregroundStyle(.secondary)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .fixedSize(horizontal: false, vertical: true)
+            .textSelection(.enabled)
+            .environment(\.layoutDirection, .leftToRight)
+    }
+}
+
+/// Marks where a new juz begins inside a surah.
+struct JuzDivider: View {
+    let juz: Int
+
+    var body: some View {
+        HStack(spacing: 10) {
+            line
+            HStack(spacing: 5) {
+                EightPointStar()
+                    .fill(Color.gold)
+                    .frame(width: 9, height: 9)
+                Text("Juz \(juz)")
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(.secondary)
+            }
+            line
+        }
+        .padding(.vertical, 10)
+        .accessibilityElement(children: .combine)
+        .accessibilityAddTraits(.isHeader)
+    }
+
+    private var line: some View {
+        Rectangle().fill(Color.gold.opacity(0.35)).frame(height: 0.5)
     }
 }
 

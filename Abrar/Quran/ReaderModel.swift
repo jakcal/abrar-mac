@@ -7,8 +7,15 @@ final class ReaderModel {
     private(set) var surahs: [Surah] = []
     private(set) var filteredSurahs: [Surah] = []
     private(set) var ayahs: [Ayah] = []
+    /// English translation of the selected surah, keyed by ayah number.
+    private(set) var translations: [Int: String] = [:]
+    private(set) var juzs: [QuranMark] = []
+    private(set) var pages: [QuranMark] = []
+    /// Topmost ayah on screen, for the location shown in the title bar.
+    private(set) var topAyah: Int?
     private(set) var bookmarks: [Bookmark] = []
     private(set) var errorMessage: String?
+    var showsGoTo = false
     /// Ayah number the reader should scroll to; cleared by the view once handled.
     var scrollTarget: Int?
 
@@ -41,6 +48,9 @@ final class ReaderModel {
         do {
             surahs = try quran.surahs()
             bookmarks = try library.bookmarks()
+            juzs = try quran.juzStarts()
+            pages = try quran.pageStarts()
+            errorMessage = nil
             applySearch()
             if selectedSurahID == nil, let position = try library.readingPosition() {
                 open(surah: position.surah, ayah: position.ayah)
@@ -55,13 +65,42 @@ final class ReaderModel {
         scrollTarget = ayah
     }
 
+    /// Opens "2:255", or an ayah of the current surah when given just a number. False when there's no such ayah.
+    @discardableResult
+    func go(to query: String) -> Bool {
+        let trimmed = query.trimmingCharacters(in: .whitespaces)
+        let reference = AyahReference(trimmed)
+            ?? Int(trimmed).flatMap { ayah in selectedSurahID.map { AyahReference(surah: $0, ayah: ayah) } }
+        guard let reference, let surah = surahs.first(where: { $0.id == reference.surah }),
+              reference.ayah <= surah.ayahCount else { return false }
+        open(surah: reference.surah, ayah: reference.ayah)
+        return true
+    }
+
+    func juz(surah: Int, ayah: Int) -> Int? { juzs.index(surah: surah, ayah: ayah) }
+    func page(surah: Int, ayah: Int) -> Int? { pages.index(surah: surah, ayah: ayah) }
+
+    /// The juz this ayah opens, if any. Skips juz 1, which opens with the Quran itself.
+    func startsJuz(_ ayah: Ayah) -> Int? {
+        juzs.first { $0.surah == ayah.surah && $0.ayah == ayah.number && $0.id > 1 }?.id
+    }
+
+    func translation(of ayah: Ayah) -> String? { translations[ayah.number] }
+
     func ayahAppeared(_ number: Int) {
         visibleAyahs.insert(number)
+        updateTopAyah()
         scheduleSave()
     }
 
     func ayahDisappeared(_ number: Int) {
         visibleAyahs.remove(number)
+        updateTopAyah()
+    }
+
+    private func updateTopAyah() {
+        let top = visibleAyahs.min()
+        if top != topAyah { topAyah = top }
     }
 
     func isBookmarked(_ ayah: Ayah) -> Bool {
@@ -100,14 +139,19 @@ final class ReaderModel {
 
     private func loadAyahs() {
         visibleAyahs.removeAll()
+        topAyah = nil
         guard let selectedSurahID else {
             ayahs = []
+            translations = [:]
             return
         }
         do {
             ayahs = try quran.ayahs(inSurah: selectedSurahID)
+            translations = (try? quran.translations(inSurah: selectedSurahID)) ?? [:]
+            errorMessage = nil
         } catch {
             ayahs = []
+            translations = [:]
             errorMessage = error.localizedDescription
         }
     }

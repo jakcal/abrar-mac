@@ -7,6 +7,10 @@ protocol QuranStore: Sendable {
     func ayahs(inSurah surah: Int) throws -> [Ayah]
     func searchSurahs(_ query: String) throws -> [Surah]
     func textAttribution() throws -> String
+    /// English translation keyed by ayah number.
+    func translations(inSurah surah: Int) throws -> [Int: String]
+    func juzStarts() throws -> [QuranMark]
+    func pageStarts() throws -> [QuranMark]
 }
 
 enum QuranStoreError: Error {
@@ -55,7 +59,7 @@ struct GRDBQuranStore: QuranStore {
         let trimmed = query.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return try surahs() }
 
-        if let number = Int(trimmed) {
+        if let number = Int(trimmed) ?? AyahReference(trimmed)?.surah {
             return try surah(id: number).map { [$0] } ?? []
         }
 
@@ -81,6 +85,21 @@ struct GRDBQuranStore: QuranStore {
         try dbQueue.read { db in
             try String.fetchOne(db, sql: "SELECT value FROM meta WHERE key = 'tanzil_copyright'") ?? ""
         }
+    }
+
+    func translations(inSurah surah: Int) throws -> [Int: String] {
+        try dbQueue.read { db in
+            let rows = try Row.fetchAll(db, sql: "SELECT number, text FROM translations WHERE surah = ?", arguments: [surah])
+            return Dictionary(uniqueKeysWithValues: rows.map { ($0["number"] as Int, $0["text"] as String) })
+        }
+    }
+
+    func juzStarts() throws -> [QuranMark] {
+        try dbQueue.read { db in try QuranMark.fetchAll(db, sql: "SELECT * FROM juzs ORDER BY id") }
+    }
+
+    func pageStarts() throws -> [QuranMark] {
+        try dbQueue.read { db in try QuranMark.fetchAll(db, sql: "SELECT * FROM pages ORDER BY id") }
     }
 
     /// Mirrors `search_key()` in scripts/build_quran_db.py.

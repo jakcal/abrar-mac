@@ -2,9 +2,17 @@ import SwiftUI
 
 struct ReaderToolbar: ToolbarContent {
     @Environment(SettingsStore.self) private var store
+    @Environment(ReaderModel.self) private var reader
     @State private var showsBookmarks = false
 
     var body: some ToolbarContent {
+        ToolbarItem(placement: .primaryAction) {
+            Button("Go to Ayah", systemImage: "arrow.down.to.line") { reader.showsGoTo.toggle() }
+                .help("Go to an ayah (⌘L)")
+                .popover(isPresented: Bindable(reader).showsGoTo, arrowEdge: .bottom) {
+                    GoToAyahView { reader.showsGoTo = false }
+                }
+        }
         ToolbarItem(placement: .primaryAction) {
             ControlGroup {
                 Button("Smaller Text", systemImage: "textformat.size.smaller") { store.adjustQuranFontSize(by: -1) }
@@ -16,6 +24,23 @@ struct ReaderToolbar: ToolbarContent {
             } label: {
                 Label("Text Size", systemImage: "textformat.size")
             }
+        }
+        ToolbarItem(placement: .primaryAction) {
+            Toggle(isOn: Bindable(store).settings.showTranslation) {
+                Label("Translation", systemImage: "character.book.closed")
+            }
+            .help("Show the English translation (⌘T)")
+        }
+        ToolbarItem(placement: .primaryAction) {
+            Menu {
+                Picker("Page", selection: Bindable(store).settings.readerTheme) {
+                    ForEach(ReaderTheme.allCases) { Text($0.title).tag($0) }
+                }
+                .pickerStyle(.inline)
+            } label: {
+                Label("Page Colour", systemImage: "circle.lefthalf.filled")
+            }
+            .help("Page colour")
         }
         ToolbarItem(placement: .primaryAction) {
             Toggle(isOn: Bindable(store).settings.followRecitation) {
@@ -68,6 +93,10 @@ struct ReaderShortcuts: View {
                 .keyboardShortcut("[", modifiers: .command)
             Button("Next Surah") { step(1) }
                 .keyboardShortcut("]", modifiers: .command)
+            Button("Go to Ayah") { reader.showsGoTo = true }
+                .keyboardShortcut("l", modifiers: .command)
+            Button("Translation") { store.settings.showTranslation.toggle() }
+                .keyboardShortcut("t", modifiers: .command)
         }
         .opacity(0)
         .accessibilityHidden(true)
@@ -77,5 +106,41 @@ struct ReaderShortcuts: View {
         let target = (reader.selectedSurahID ?? 0) + offset
         guard reader.surahs.contains(where: { $0.id == target }) else { return }
         reader.open(surah: target)
+    }
+}
+
+/// Small field that jumps to "2:255", or to an ayah of the open surah when given just a number.
+struct GoToAyahView: View {
+    var dismiss: () -> Void
+
+    @Environment(ReaderModel.self) private var reader
+    @State private var query = ""
+    @State private var isInvalid = false
+    @FocusState private var isFocused: Bool
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Go to Ayah")
+                .font(.headline)
+            TextField(reader.selectedSurah.map { "\($0.id):1 or 1 to \($0.ayahCount)" } ?? "Surah:Ayah, e.g. 2:255", text: $query)
+                .textFieldStyle(.roundedBorder)
+                .focused($isFocused)
+                .onSubmit(submit)
+                .onChange(of: query) { isInvalid = false }
+            Text(isInvalid ? "No such ayah." : "Type a surah and ayah like 2:255.")
+                .font(.caption)
+                .foregroundStyle(isInvalid ? AnyShapeStyle(Color.red) : AnyShapeStyle(.secondary))
+        }
+        .padding(14)
+        .frame(width: 260)
+        .onAppear { isFocused = true }
+    }
+
+    private func submit() {
+        if reader.go(to: query) {
+            dismiss()
+        } else {
+            isInvalid = true
+        }
     }
 }

@@ -3,6 +3,8 @@
 
 The Quran text is copied verbatim from Tanzil (Uthmani). Tanzil's copyright
 block is stored unchanged in the `meta` table and must not be removed.
+The English translation (Saheeh International) also comes from Tanzil, which
+allows non-commercial use with attribution; its header is kept in `meta` too.
 
 Usage: python3 scripts/build_quran_db.py [--refresh]
 """
@@ -25,6 +27,7 @@ TEXT_URL = (
     "&quranType=uthmani&outType=xml&agree=true"
 )
 METADATA_URL = "https://tanzil.net/res/text/metadata/quran-data.xml"
+TRANSLATION_URL = "https://tanzil.net/trans/?transID=en.sahih&type=txt-2"
 
 EXPECTED_SURAHS = 114
 EXPECTED_AYAHS = 6236
@@ -96,6 +99,23 @@ def build(refresh: bool) -> None:
             text TEXT NOT NULL,
             PRIMARY KEY (surah, number)
         ) WITHOUT ROWID;
+        CREATE TABLE translations (
+            surah INTEGER NOT NULL REFERENCES surahs(id),
+            number INTEGER NOT NULL,
+            text TEXT NOT NULL,
+            PRIMARY KEY (surah, number)
+        ) WITHOUT ROWID;
+        -- First ayah of each juz and of each page of the Madani mushaf.
+        CREATE TABLE juzs (
+            id INTEGER PRIMARY KEY NOT NULL,
+            surah INTEGER NOT NULL,
+            ayah INTEGER NOT NULL
+        );
+        CREATE TABLE pages (
+            id INTEGER PRIMARY KEY NOT NULL,
+            surah INTEGER NOT NULL,
+            ayah INTEGER NOT NULL
+        );
         """
     )
 
@@ -127,6 +147,32 @@ def build(refresh: bool) -> None:
         )
         ayah_total += len(ayahs)
 
+    translation_text = fetch(TRANSLATION_URL, "en.sahih.txt", refresh)
+    translation_notice = "\n".join(
+        line.lstrip("#").strip() for line in translation_text.splitlines() if line.startswith("#")
+    ).strip()
+    if "Saheeh International" not in translation_notice:
+        sys.exit("Translation header not found")
+    rows = []
+    for line in translation_text.splitlines():
+        parts = line.split("|", 2)
+        if len(parts) == 3 and parts[0].isdigit():
+            rows.append((int(parts[0]), int(parts[1]), parts[2]))
+    if len(rows) != EXPECTED_AYAHS:
+        sys.exit(f"Translation has {len(rows)} ayahs")
+    db.executemany("INSERT INTO translations VALUES (?, ?, ?)", rows)
+
+    for table, tag in (("juzs", "juz"), ("pages", "page")):
+        marks = meta_root.find(f"{tag}s").findall(tag)
+        db.executemany(
+            f"INSERT INTO {table} VALUES (?, ?, ?)",
+            [(int(m.get("index")), int(m.get("sura")), int(m.get("aya"))) for m in marks],
+        )
+    if db.execute("SELECT COUNT(*) FROM juzs").fetchone()[0] != 30:
+        sys.exit("Expected 30 juzs")
+    if db.execute("SELECT COUNT(*) FROM pages").fetchone()[0] != 604:
+        sys.exit("Expected 604 pages")
+
     surah_total = db.execute("SELECT COUNT(*) FROM surahs").fetchone()[0]
     if surah_total != EXPECTED_SURAHS or ayah_total != EXPECTED_AYAHS:
         sys.exit(f"Unexpected totals: {surah_total} surahs, {ayah_total} ayahs")
@@ -138,6 +184,8 @@ def build(refresh: bool) -> None:
             ("tanzil_version", version.group(1) if version else "unknown"),
             ("tanzil_type", "uthmani"),
             ("source", "https://tanzil.net"),
+            ("translation_name", "Saheeh International"),
+            ("translation_notice", translation_notice),
         ],
     )
     db.commit()

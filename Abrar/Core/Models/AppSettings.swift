@@ -1,5 +1,20 @@
 import Foundation
 
+/// Page colour of the Quran reader.
+enum ReaderTheme: String, Codable, CaseIterable, Identifiable, Sendable {
+    case standard, paper, night
+
+    var id: Self { self }
+
+    var title: String {
+        switch self {
+        case .standard: "Match System"
+        case .paper: "Paper"
+        case .night: "Night"
+        }
+    }
+}
+
 enum LocationMode: String, Codable, CaseIterable, Sendable {
     case automatic, manual
 }
@@ -21,6 +36,8 @@ struct AppSettings: Codable, Equatable, Sendable {
     var reciterID = Reciter.defaultID
     var quranFontSize: Double = 30
     var followRecitation = true
+    var showTranslation = false
+    var readerTheme: ReaderTheme = .standard
     var playbackRate: Double = 1
     var checkForUpdates = true
     var highlightSoon = true
@@ -58,6 +75,7 @@ struct AppSettings: Codable, Equatable, Sendable {
         case locationMode, manualPlace, detectedPlace, method, madhab
         case fajrAngleOverride, ishaAngleOverride, offsets, notifiedPrayers
         case playFullAdhan, prayerSounds, adhanVoiceID, customAdhans, reciterID, quranFontSize, followRecitation, playbackRate, checkForUpdates
+        case showTranslation, readerTheme
         case highlightSoon, highlightSoonMinutes
         case dhikrReminders, adhkar
     }
@@ -82,6 +100,8 @@ struct AppSettings: Codable, Equatable, Sendable {
         reciterID = try c.decodeIfPresent(String.self, forKey: .reciterID) ?? d.reciterID
         quranFontSize = try c.decodeIfPresent(Double.self, forKey: .quranFontSize) ?? d.quranFontSize
         followRecitation = try c.decodeIfPresent(Bool.self, forKey: .followRecitation) ?? d.followRecitation
+        showTranslation = try c.decodeIfPresent(Bool.self, forKey: .showTranslation) ?? d.showTranslation
+        readerTheme = try c.decodeIfPresent(ReaderTheme.self, forKey: .readerTheme) ?? d.readerTheme
         playbackRate = try c.decodeIfPresent(Double.self, forKey: .playbackRate) ?? d.playbackRate
         checkForUpdates = try c.decodeIfPresent(Bool.self, forKey: .checkForUpdates) ?? d.checkForUpdates
         highlightSoon = try c.decodeIfPresent(Bool.self, forKey: .highlightSoon) ?? d.highlightSoon

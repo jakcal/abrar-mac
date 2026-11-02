@@ -4,6 +4,7 @@ struct SurahHeader: View {
     let surah: Surah
 
     @Environment(SettingsStore.self) private var store
+    @Environment(ReaderModel.self) private var reader
 
     private var fontSize: Double { store.settings.quranFontSize }
 
@@ -46,7 +47,12 @@ struct SurahHeader: View {
     }
 
     private var meta: String {
-        "\(surah.nameEnglish) · \(surah.revelationType) · \(surah.ayahCount) ayahs"
+        var parts = [surah.nameEnglish, surah.revelationType, "\(surah.ayahCount) ayahs"]
+        if let first = reader.juz(surah: surah.id, ayah: 1),
+           let last = reader.juz(surah: surah.id, ayah: surah.ayahCount) {
+            parts.append(first == last ? "Juz \(first)" : "Juz \(first)–\(last)")
+        }
+        return parts.joined(separator: " · ")
     }
 
     /// Faint star behind the title, clipped by the card.
